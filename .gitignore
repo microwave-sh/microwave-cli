@@ -1,0 +1,12 @@
+# Binary output
+/microwave-cli
+
+# Dependency vendor directory
+vendor/
+
+# Test artifacts
+*.test
+*.out
+
+# Local environment overrides
+.env
