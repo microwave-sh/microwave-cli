@@ -14,17 +14,48 @@
 
 package main
 
-import microwave "github.com/microwave-sh/microwave-go"
+import (
+	"fmt"
+	"net/http"
+)
 
 // Globals holds flags available to every command.
 type Globals struct {
 	APIKey  string `env:"MICROWAVE_API_KEY" help:"Microwave API key. Defaults to MICROWAVE_API_KEY env var." short:"k"`
-	BaseURL string `env:"MICROWAVE_BASE_URL" help:"Override the API base URL." default:"https://api.microwave.dev" hidden:""`
+	BaseURL string `env:"MICROWAVE_BASE_URL" help:"Override the API base URL." hidden:""`
+	Output  string `name:"output" short:"o" enum:"table,json" default:"table" help:"Output format."`
 }
 
-func (g *Globals) client() (*microwave.Client, error) {
-	return microwave.NewClient(
-		microwave.WithBaseURL(g.BaseURL),
-		microwave.WithAPIKey(g.APIKey),
-	)
+func (g *Globals) client(requireAuth bool) (*managementClient, error) {
+	cfg := LoadGlobalConfig()
+	apiKey := g.APIKey
+	if apiKey == "" {
+		apiKey = cfg.Auth.APIKey
+	}
+	if requireAuth && apiKey == "" {
+		return nil, fmt.Errorf("not logged in. Run `microwave login <api-key>` or set MICROWAVE_API_KEY")
+	}
+
+	baseURL := g.BaseURL
+	if baseURL == "" {
+		baseURL = cfg.APIURL
+	}
+	if baseURL == "" {
+		baseURL = defaultAPIURL
+	}
+
+	return &managementClient{
+		baseURL:    baseURL,
+		apiKey:     apiKey,
+		apiVersion: defaultAPIVersion,
+		httpClient: &http.Client{Timeout: defaultHTTPTimeout},
+	}, nil
+}
+
+func (g *Globals) activeWorkspace() string {
+	return LoadGlobalConfig().Workspace.Active
+}
+
+func (g *Globals) isJSON() bool {
+	return g.Output == "json"
 }

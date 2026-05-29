@@ -14,34 +14,78 @@
 
 package main
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"os"
+)
 
 // LoginCmd configures API credentials.
 type LoginCmd struct {
-	Key string `arg:"" optional:"" help:"API key to store. If omitted, opens the browser to retrieve one."`
+	Key     string `arg:"" optional:"" help:"API key to store. If omitted, prints the console key URL."`
+	BaseURL string `help:"Persist a custom API base URL."`
 }
 
 func (c *LoginCmd) Run(g *Globals) error {
 	if c.Key == "" {
-		fmt.Println("Opening https://microwave.dev/keys in your browser...")
-		// TODO: open browser + token exchange flow
+		fmt.Println("Create or reveal an API key in the Microwave Console:")
+		fmt.Printf("  %s/keys\n\n", defaultConsoleURL)
+		fmt.Println("Then run:")
+		fmt.Println("  microwave login <api-key>")
 		return nil
 	}
-	// TODO: persist key to config file
-	fmt.Printf("API key saved.\n")
+	cfg := LoadGlobalConfig()
+	cfg.Auth.APIKey = c.Key
+	if c.BaseURL != "" {
+		cfg.APIURL = c.BaseURL
+	}
+	if err := SaveGlobalConfig(cfg); err != nil {
+		return err
+	}
+	fmt.Printf("API key saved to %s\n", globalConfigPath())
+	return nil
+}
+
+// LogoutCmd clears stored API credentials.
+type LogoutCmd struct{}
+
+func (c *LogoutCmd) Run(g *Globals) error {
+	if err := clearGlobalAuth(); err != nil {
+		return err
+	}
+	fmt.Println("Logged out.")
 	return nil
 }
 
 // AuthCmd groups auth-related subcommands.
 type AuthCmd struct {
 	Whoami WhoamiCmd `cmd:"" help:"Print the authenticated identity."`
+	Logout LogoutCmd `cmd:"" help:"Clear stored credentials."`
 }
 
 // WhoamiCmd prints the authenticated identity.
 type WhoamiCmd struct{}
 
 func (c *WhoamiCmd) Run(g *Globals) error {
-	// TODO: call /auth/whoami
-	fmt.Printf("API key: %s\n", g.APIKey)
+	client, err := g.client(true)
+	if err != nil {
+		return err
+	}
+	for _, path := range []string{"/workspaces/me", "/auth/whoami", "/me"} {
+		resp, err := client.do(context.Background(), "GET", path, nil)
+		if err == nil {
+			return printAPIResponse(resp, g.isJSON())
+		}
+	}
+
+	cfg := LoadGlobalConfig()
+	key := g.APIKey
+	if key == "" {
+		key = cfg.Auth.APIKey
+	}
+	if g.isJSON() {
+		return printJSON(map[string]string{"api_key": maskSecret(key)})
+	}
+	fmt.Fprintf(os.Stdout, "API key: %s\n", maskSecret(key))
 	return nil
 }

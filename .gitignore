@@ -10,3 +10,5 @@ vendor/
 
 # Local environment overrides
 .env
+
+.worktrees/

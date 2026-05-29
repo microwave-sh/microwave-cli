@@ -26,15 +26,27 @@ import (
 type CLI struct {
 	Globals
 
-	Login     LoginCmd     `cmd:"" help:"Configure API credentials."`
-	Auth      AuthCmd      `cmd:"" help:"Authentication commands."`
-	Address   AddressCmd   `cmd:"" help:"Address and postal code operations."`
-	Encoding  EncodingCmd  `cmd:"" help:"Encoding, hashing, and format conversion."`
-	Financial FinancialCmd `cmd:"" help:"Currency, FX, tax, and financial calculations."`
-	Geo       GeoCmd       `cmd:"" help:"Geospatial calculations and lookups."`
-	Math      MathCmd      `cmd:"" help:"Mathematical calculations and statistics."`
-	Text      TextCmd      `cmd:"" help:"Text parsing, transformation, and analysis."`
-	Time      TimeCmd      `cmd:"" help:"Timezone, date, and scheduling operations."`
+	Login       LoginCmd       `cmd:"" help:"Configure API credentials."`
+	Auth        AuthCmd        `cmd:"" help:"Authentication commands."`
+	Logout      LogoutCmd      `cmd:"" help:"Clear stored credentials."`
+	Whoami      WhoamiCmd      `cmd:"" help:"Print the authenticated identity."`
+	Version     VersionCmd     `cmd:"" help:"Print the CLI version."`
+	Config      ConfigCmd      `cmd:"" help:"Manage local Microwave configuration."`
+	Workspace   WorkspaceCmd   `cmd:"" help:"Manage workspaces."`
+	Spec        SpecCmd        `cmd:"" help:"Connect and validate OpenAPI specs."`
+	SDK         SDKCmd         `cmd:"" name:"sdk" help:"Run SDK generation jobs."`
+	Docs        DocsCmd        `cmd:"" help:"Manage generated documentation."`
+	Collections CollectionsCmd `cmd:"" help:"Manage API collections."`
+	Keys        KeysCmd        `cmd:"" help:"Issue, verify, and revoke AKaaS keys."`
+	JWKS        JWKSCmd        `cmd:"" name:"jwks" help:"Manage public JWKS sets."`
+	Console     ConsoleCmd     `cmd:"" help:"Open console URLs and fetch activity."`
+	Address     AddressCmd     `cmd:"" help:"Address and postal code operations."`
+	Encoding    EncodingCmd    `cmd:"" help:"Encoding, hashing, and format conversion."`
+	Financial   FinancialCmd   `cmd:"" help:"Currency, FX, tax, and financial calculations."`
+	Geo         GeoCmd         `cmd:"" help:"Geospatial calculations and lookups."`
+	Math        MathCmd        `cmd:"" help:"Mathematical calculations and statistics."`
+	Text        TextCmd        `cmd:"" help:"Text parsing, transformation, and analysis."`
+	Time        TimeCmd        `cmd:"" help:"Timezone, date, and scheduling operations."`
 }
 
 func main() {
