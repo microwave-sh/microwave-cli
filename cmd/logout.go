@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/microwave-sh/microwave-cli/internal/config"
@@ -9,7 +10,7 @@ import (
 
 type LogoutCmd struct{}
 
-func (c *LogoutCmd) Run(g *Globals) error {
+func (c *LogoutCmd) Run(_ context.Context, g *Globals) error {
 	if err := config.ClearAuth(); err != nil {
 		return err
 	}

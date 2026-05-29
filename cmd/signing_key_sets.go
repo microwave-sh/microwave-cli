@@ -25,8 +25,8 @@ type SigningKeySetsCmd struct {
 
 type signingKeySetsListCmd struct{ listFlags }
 
-func (c *signingKeySetsListCmd) Run(g *Globals) error {
-	page, err := g.Client().SearchSigningKeySets(context.Background(), c.searchRequest(nil))
+func (c *signingKeySetsListCmd) Run(ctx context.Context, g *Globals) error {
+	page, err := g.Client().SearchSigningKeySets(ctx, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
@@ -48,8 +48,8 @@ type signingKeySetsGetCmd struct {
 	Name string `arg:"" help:"Key set name."`
 }
 
-func (c *signingKeySetsGetCmd) Run(g *Globals) error {
-	detail, err := g.Client().GetSigningKeySet(context.Background(), c.Kind, c.Name)
+func (c *signingKeySetsGetCmd) Run(ctx context.Context, g *Globals) error {
+	detail, err := g.Client().GetSigningKeySet(ctx, c.Kind, c.Name)
 	if err != nil {
 		return err
 	}
@@ -64,13 +64,13 @@ type signingKeySetsCreateCmd struct {
 	Algorithm string `help:"Signing algorithm (e.g. RS256, ES256, HS256)." required:""`
 }
 
-func (c *signingKeySetsCreateCmd) Run(g *Globals) error {
+func (c *signingKeySetsCreateCmd) Run(ctx context.Context, g *Globals) error {
 	in := client.SigningKeySetInput{
 		Name:      c.Name,
 		Kind:      c.Kind,
 		Algorithm: c.Algorithm,
 	}
-	s, err := g.Client().CreateSigningKeySet(context.Background(), in)
+	s, err := g.Client().CreateSigningKeySet(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -85,8 +85,8 @@ type signingKeySetsUpdateCmd struct {
 	NewName string `name:"name" help:"New name for the key set." required:""`
 }
 
-func (c *signingKeySetsUpdateCmd) Run(g *Globals) error {
-	s, err := g.Client().UpdateSigningKeySet(context.Background(), c.Kind, c.Name, c.NewName)
+func (c *signingKeySetsUpdateCmd) Run(ctx context.Context, g *Globals) error {
+	s, err := g.Client().UpdateSigningKeySet(ctx, c.Kind, c.Name, c.NewName)
 	if err != nil {
 		return err
 	}
@@ -100,8 +100,8 @@ type signingKeySetsDeleteCmd struct {
 	Name string `arg:"" help:"Key set name."`
 }
 
-func (c *signingKeySetsDeleteCmd) Run(g *Globals) error {
-	if err := g.Client().DeleteSigningKeySet(context.Background(), c.Kind, c.Name); err != nil {
+func (c *signingKeySetsDeleteCmd) Run(ctx context.Context, g *Globals) error {
+	if err := g.Client().DeleteSigningKeySet(ctx, c.Kind, c.Name); err != nil {
 		return err
 	}
 	fmt.Printf("%s Deleted %s/%s\n", output.Green.Render("✓"), c.Kind, c.Name)
@@ -132,12 +132,12 @@ func parseSignJWTInput(payload, header, kid string) (client.SignJWTInput, error)
 	return client.SignJWTInput{Payload: p, KID: kid, Header: h}, nil
 }
 
-func (c *signingKeySetsSignCmd) Run(g *Globals) error {
+func (c *signingKeySetsSignCmd) Run(ctx context.Context, g *Globals) error {
 	in, err := parseSignJWTInput(c.Payload, c.Header, c.KID)
 	if err != nil {
 		return err
 	}
-	res, err := g.Client().SignJWT(context.Background(), c.Kind, c.Name, in)
+	res, err := g.Client().SignJWT(ctx, c.Kind, c.Name, in)
 	if err != nil {
 		return err
 	}
@@ -151,8 +151,8 @@ type signingKeySetsSecretCmd struct {
 	Name string `arg:"" help:"Key set name."`
 }
 
-func (c *signingKeySetsSecretCmd) Run(g *Globals) error {
-	state, err := g.Client().SigningKeySetSecret(context.Background(), c.Kind, c.Name)
+func (c *signingKeySetsSecretCmd) Run(ctx context.Context, g *Globals) error {
+	state, err := g.Client().SigningKeySetSecret(ctx, c.Kind, c.Name)
 	if err != nil {
 		return err
 	}
@@ -166,8 +166,8 @@ type signingKeySetsRotateSecretCmd struct {
 	Name string `arg:"" help:"Key set name."`
 }
 
-func (c *signingKeySetsRotateSecretCmd) Run(g *Globals) error {
-	state, err := g.Client().RotateSigningKeySetSecret(context.Background(), c.Kind, c.Name)
+func (c *signingKeySetsRotateSecretCmd) Run(ctx context.Context, g *Globals) error {
+	state, err := g.Client().RotateSigningKeySetSecret(ctx, c.Kind, c.Name)
 	if err != nil {
 		return err
 	}
@@ -191,8 +191,8 @@ type signingKeySetsKeysGenerateCmd struct {
 	Name string `arg:"" help:"Key set name."`
 }
 
-func (c *signingKeySetsKeysGenerateCmd) Run(g *Globals) error {
-	key, err := g.Client().GenerateSigningKey(context.Background(), c.Kind, c.Name)
+func (c *signingKeySetsKeysGenerateCmd) Run(ctx context.Context, g *Globals) error {
+	key, err := g.Client().GenerateSigningKey(ctx, c.Kind, c.Name)
 	if err != nil {
 		return err
 	}
@@ -207,8 +207,8 @@ type signingKeySetsKeysActivateCmd struct {
 	KeyID string `arg:"" name:"key-id" help:"Key ID to activate."`
 }
 
-func (c *signingKeySetsKeysActivateCmd) Run(g *Globals) error {
-	key, err := g.Client().ActivateSigningKey(context.Background(), c.Kind, c.Name, c.KeyID)
+func (c *signingKeySetsKeysActivateCmd) Run(ctx context.Context, g *Globals) error {
+	key, err := g.Client().ActivateSigningKey(ctx, c.Kind, c.Name, c.KeyID)
 	if err != nil {
 		return err
 	}
@@ -223,8 +223,8 @@ type signingKeySetsKeysRevokeCmd struct {
 	KeyID string `arg:"" name:"key-id" help:"Key ID to revoke."`
 }
 
-func (c *signingKeySetsKeysRevokeCmd) Run(g *Globals) error {
-	key, err := g.Client().RevokeSigningKey(context.Background(), c.Kind, c.Name, c.KeyID)
+func (c *signingKeySetsKeysRevokeCmd) Run(ctx context.Context, g *Globals) error {
+	key, err := g.Client().RevokeSigningKey(ctx, c.Kind, c.Name, c.KeyID)
 	if err != nil {
 		return err
 	}
@@ -239,8 +239,8 @@ type signingKeySetsKeysSecretCmd struct {
 	KeyID string `arg:"" name:"key-id" help:"Key ID."`
 }
 
-func (c *signingKeySetsKeysSecretCmd) Run(g *Globals) error {
-	m, err := g.Client().SigningKeySecret(context.Background(), c.Kind, c.Name, c.KeyID)
+func (c *signingKeySetsKeysSecretCmd) Run(ctx context.Context, g *Globals) error {
+	m, err := g.Client().SigningKeySecret(ctx, c.Kind, c.Name, c.KeyID)
 	if err != nil {
 		return err
 	}

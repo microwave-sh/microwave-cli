@@ -9,12 +9,12 @@ import (
 
 type WhoamiCmd struct{}
 
-func (c *WhoamiCmd) Run(g *Globals) error {
+func (c *WhoamiCmd) Run(ctx context.Context, g *Globals) error {
 	token, err := g.resolveToken()
 	if err != nil {
 		return err
 	}
-	res, err := g.Client().VerifyKey(context.Background(), token)
+	res, err := g.Client().VerifyKey(ctx, token)
 	if err != nil {
 		return err
 	}

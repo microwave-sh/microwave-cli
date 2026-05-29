@@ -1,10 +1,13 @@
 package cmd
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type VersionCmd struct{}
 
-func (c *VersionCmd) Run(g *Globals) error {
+func (c *VersionCmd) Run(_ context.Context, g *Globals) error {
 	fmt.Println(g.Version)
 	return nil
 }

@@ -1,12 +1,15 @@
 package cmd
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type CompletionCmd struct {
 	Shell string `arg:"" enum:"bash,zsh,fish" help:"Shell type (bash, zsh, fish)."`
 }
 
-func (c *CompletionCmd) Run(g *Globals) error {
+func (c *CompletionCmd) Run(_ context.Context, g *Globals) error {
 	switch c.Shell {
 	case "bash":
 		fmt.Println("# Add to ~/.bashrc:\n# source <(microwave completion bash)")

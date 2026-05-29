@@ -13,6 +13,7 @@ func TestTECreate_ToInput_OIDCType(t *testing.T) {
 		Issuer:           "https://token.actions.githubusercontent.com",
 		AllowedAudiences: "api://prod",
 		OutputMode:       "claims",
+		Active:           true,
 	}
 	in, err := c.toInput()
 	if err != nil {

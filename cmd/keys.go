@@ -48,9 +48,9 @@ func buildKeysFilter(specID, subject, status string) map[string]map[string]any {
 	return filter
 }
 
-func (c *keysListCmd) Run(g *Globals) error {
+func (c *keysListCmd) Run(ctx context.Context, g *Globals) error {
 	filter := buildKeysFilter(c.SpecID, c.Subject, c.Status)
-	page, err := g.Client().SearchKeys(context.Background(), c.searchRequest(filter))
+	page, err := g.Client().SearchKeys(ctx, c.searchRequest(filter))
 	if err != nil {
 		return err
 	}
@@ -71,8 +71,8 @@ type keysGetCmd struct {
 	ID string `arg:"" help:"Key ID."`
 }
 
-func (c *keysGetCmd) Run(g *Globals) error {
-	k, err := g.Client().GetKey(context.Background(), c.ID)
+func (c *keysGetCmd) Run(ctx context.Context, g *Globals) error {
+	k, err := g.Client().GetKey(ctx, c.ID)
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func parseExpiresAt(s string) (*time.Time, error) {
 	return &t, nil
 }
 
-func (c *keysUpdateCmd) Run(g *Globals) error {
+func (c *keysUpdateCmd) Run(ctx context.Context, g *Globals) error {
 	exp, err := parseExpiresAt(c.ExpiresAt)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func (c *keysUpdateCmd) Run(g *Globals) error {
 		ExpiresAt: exp,
 		Metadata:  meta,
 	}
-	k, err := g.Client().UpdateKey(context.Background(), c.ID, in)
+	k, err := g.Client().UpdateKey(ctx, c.ID, in)
 	if err != nil {
 		return err
 	}
@@ -130,10 +130,13 @@ type keysRevokeCmd struct {
 	ID string `arg:"" help:"Key ID."`
 }
 
-func (c *keysRevokeCmd) Run(g *Globals) error {
-	k, err := g.Client().RevokeKey(context.Background(), c.ID)
+func (c *keysRevokeCmd) Run(ctx context.Context, g *Globals) error {
+	k, err := g.Client().RevokeKey(ctx, c.ID)
 	if err != nil {
 		return err
+	}
+	if g.IsJSON() {
+		return output.PrintJSON(k)
 	}
 	fmt.Printf("%s Revoked %s\n", output.Green.Render("✓"), c.ID)
 	return output.PrintJSON(k)
@@ -146,8 +149,8 @@ type keysRotateCmd struct {
 	OverlapSeconds int    `name:"overlap-seconds" help:"Seconds the old key remains valid after rotation." default:"0"`
 }
 
-func (c *keysRotateCmd) Run(g *Globals) error {
-	res, err := g.Client().RotateKey(context.Background(), c.ID, client.RotateKeyInput{
+func (c *keysRotateCmd) Run(ctx context.Context, g *Globals) error {
+	res, err := g.Client().RotateKey(ctx, c.ID, client.RotateKeyInput{
 		OverlapSeconds: c.OverlapSeconds,
 	})
 	if err != nil {
@@ -160,11 +163,10 @@ func (c *keysRotateCmd) Run(g *Globals) error {
 
 type keysEventsCmd struct {
 	ID string `arg:"" help:"Key ID."`
-	listFlags
 }
 
-func (c *keysEventsCmd) Run(g *Globals) error {
-	events, err := g.Client().KeyEvents(context.Background(), c.ID)
+func (c *keysEventsCmd) Run(ctx context.Context, g *Globals) error {
+	events, err := g.Client().KeyEvents(ctx, c.ID)
 	if err != nil {
 		return err
 	}
@@ -185,8 +187,8 @@ type keysVerifyCmd struct {
 	Key string `arg:"" help:"Key string to verify."`
 }
 
-func (c *keysVerifyCmd) Run(g *Globals) error {
-	result, err := g.Client().VerifyKey(context.Background(), c.Key)
+func (c *keysVerifyCmd) Run(ctx context.Context, g *Globals) error {
+	result, err := g.Client().VerifyKey(ctx, c.Key)
 	if err != nil {
 		return err
 	}

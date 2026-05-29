@@ -21,8 +21,8 @@ type PermissionSetsCmd struct {
 
 type psListCmd struct{ listFlags }
 
-func (c *psListCmd) Run(g *Globals) error {
-	page, err := g.Client().SearchPermissionSets(context.Background(), c.searchRequest(nil))
+func (c *psListCmd) Run(ctx context.Context, g *Globals) error {
+	page, err := g.Client().SearchPermissionSets(ctx, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ type psCreateCmd struct {
 	Permission  []string `name:"permission" help:"Permission spec: name:label[:dangerous]. Repeatable."`
 }
 
-func (c *psCreateCmd) Run(g *Globals) error {
+func (c *psCreateCmd) Run(ctx context.Context, g *Globals) error {
 	perms, err := parsePermissions(c.Permission)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (c *psCreateCmd) Run(g *Globals) error {
 		Description: c.Description,
 		Permissions: perms,
 	}
-	ps, err := g.Client().CreatePermissionSet(context.Background(), in)
+	ps, err := g.Client().CreatePermissionSet(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ type psUpdateCmd struct {
 	psCreateCmd
 }
 
-func (c *psUpdateCmd) Run(g *Globals) error {
+func (c *psUpdateCmd) Run(ctx context.Context, g *Globals) error {
 	perms, err := parsePermissions(c.Permission)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (c *psUpdateCmd) Run(g *Globals) error {
 		Description: c.Description,
 		Permissions: perms,
 	}
-	ps, err := g.Client().UpdatePermissionSet(context.Background(), c.ID, in)
+	ps, err := g.Client().UpdatePermissionSet(ctx, c.ID, in)
 	if err != nil {
 		return err
 	}
@@ -92,8 +92,8 @@ type psDeleteCmd struct {
 	ID string `arg:"" help:"Permission set ID."`
 }
 
-func (c *psDeleteCmd) Run(g *Globals) error {
-	if err := g.Client().DeletePermissionSet(context.Background(), c.ID); err != nil {
+func (c *psDeleteCmd) Run(ctx context.Context, g *Globals) error {
+	if err := g.Client().DeletePermissionSet(ctx, c.ID); err != nil {
 		return err
 	}
 	fmt.Printf("%s Deleted %s\n", output.Green.Render("✓"), c.ID)

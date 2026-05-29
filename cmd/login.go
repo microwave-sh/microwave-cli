@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,7 +16,7 @@ type LoginCmd struct {
 	Key string `arg:"" optional:"" help:"Management API key. If omitted, prompts (and prints the console URL)."`
 }
 
-func (c *LoginCmd) Run(g *Globals) error {
+func (c *LoginCmd) Run(_ context.Context, g *Globals) error {
 	key := strings.TrimSpace(c.Key)
 	if key == "" {
 		fmt.Printf("Create a management API key at %s\n", output.Bold.Render("https://app.microwave.sh"))

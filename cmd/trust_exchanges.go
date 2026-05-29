@@ -28,7 +28,7 @@ type trustExchangesListCmd struct {
 	Active     *bool  `help:"Filter by active status."`
 }
 
-func (c *trustExchangesListCmd) Run(g *Globals) error {
+func (c *trustExchangesListCmd) Run(ctx context.Context, g *Globals) error {
 	filter := map[string]map[string]any{}
 	if c.Provider != "" {
 		filter["provider"] = map[string]any{"eq": c.Provider}
@@ -43,7 +43,7 @@ func (c *trustExchangesListCmd) Run(g *Globals) error {
 	if len(filter) > 0 {
 		filterArg = filter
 	}
-	page, err := g.Client().SearchTrustExchanges(context.Background(), c.searchRequest(filterArg))
+	page, err := g.Client().SearchTrustExchanges(ctx, c.searchRequest(filterArg))
 	if err != nil {
 		return err
 	}
@@ -64,8 +64,8 @@ type trustExchangesGetCmd struct {
 	ID string `arg:"" help:"Trust exchange ID."`
 }
 
-func (c *trustExchangesGetCmd) Run(g *Globals) error {
-	te, err := g.Client().GetTrustExchange(context.Background(), c.ID)
+func (c *trustExchangesGetCmd) Run(ctx context.Context, g *Globals) error {
+	te, err := g.Client().GetTrustExchange(ctx, c.ID)
 	if err != nil {
 		return err
 	}
@@ -88,6 +88,7 @@ type trustExchangesCreateCmd struct {
 	OutputKeySpecID  string `name:"output-key-spec-id" help:"Output key spec ID (required when output-mode=jwt)."`
 	ClaimRules       string `name:"claim-rules" help:"Claim rules as JSON object (e.g. {\"repo\":{\"equals\":\"x\",\"required\":true}})."`
 	ClaimMapping     string `name:"claim-mapping" help:"Claim mapping as JSON object."`
+	Active           bool   `name:"active" default:"true" help:"Whether the trust exchange is active."`
 }
 
 // toInput builds a TrustExchangeInput from the command flags.
@@ -107,7 +108,7 @@ func (c *trustExchangesCreateCmd) toInput() (client.TrustExchangeInput, error) {
 		},
 		OutputMode:      c.OutputMode,
 		OutputKeySpecID: c.OutputKeySpecID,
-		Active:          true,
+		Active:          c.Active,
 	}
 
 	if strings.TrimSpace(c.ClaimRules) != "" {
@@ -129,12 +130,12 @@ func (c *trustExchangesCreateCmd) toInput() (client.TrustExchangeInput, error) {
 	return in, nil
 }
 
-func (c *trustExchangesCreateCmd) Run(g *Globals) error {
+func (c *trustExchangesCreateCmd) Run(ctx context.Context, g *Globals) error {
 	in, err := c.toInput()
 	if err != nil {
 		return err
 	}
-	te, err := g.Client().CreateTrustExchange(context.Background(), in)
+	te, err := g.Client().CreateTrustExchange(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -148,12 +149,12 @@ type trustExchangesUpdateCmd struct {
 	trustExchangesCreateCmd
 }
 
-func (c *trustExchangesUpdateCmd) Run(g *Globals) error {
+func (c *trustExchangesUpdateCmd) Run(ctx context.Context, g *Globals) error {
 	in, err := c.toInput()
 	if err != nil {
 		return err
 	}
-	te, err := g.Client().UpdateTrustExchange(context.Background(), c.ID, in)
+	te, err := g.Client().UpdateTrustExchange(ctx, c.ID, in)
 	if err != nil {
 		return err
 	}
@@ -166,8 +167,8 @@ type trustExchangesDeleteCmd struct {
 	ID string `arg:"" help:"Trust exchange ID."`
 }
 
-func (c *trustExchangesDeleteCmd) Run(g *Globals) error {
-	if err := g.Client().DeleteTrustExchange(context.Background(), c.ID); err != nil {
+func (c *trustExchangesDeleteCmd) Run(ctx context.Context, g *Globals) error {
+	if err := g.Client().DeleteTrustExchange(ctx, c.ID); err != nil {
 		return err
 	}
 	fmt.Printf("%s Deleted %s\n", output.Green.Render("✓"), c.ID)

@@ -26,14 +26,14 @@ type ksListCmd struct {
 	Format string `name:"format" help:"Filter by format (opaque|jwt)."`
 }
 
-func (c *ksListCmd) Run(g *Globals) error {
+func (c *ksListCmd) Run(ctx context.Context, g *Globals) error {
 	var filter map[string]map[string]any
 	if c.Format != "" {
 		filter = map[string]map[string]any{
 			"format": {"eq": c.Format},
 		}
 	}
-	page, err := g.Client().SearchKeySpecs(context.Background(), c.searchRequest(filter))
+	page, err := g.Client().SearchKeySpecs(ctx, c.searchRequest(filter))
 	if err != nil {
 		return err
 	}
@@ -119,12 +119,12 @@ type ksCreateCmd struct {
 	ksSpecFlags
 }
 
-func (c *ksCreateCmd) Run(g *Globals) error {
+func (c *ksCreateCmd) Run(ctx context.Context, g *Globals) error {
 	in, err := c.toInput()
 	if err != nil {
 		return err
 	}
-	spec, err := g.Client().CreateKeySpec(context.Background(), in)
+	spec, err := g.Client().CreateKeySpec(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -138,12 +138,12 @@ type ksUpdateCmd struct {
 	ksSpecFlags
 }
 
-func (c *ksUpdateCmd) Run(g *Globals) error {
+func (c *ksUpdateCmd) Run(ctx context.Context, g *Globals) error {
 	in, err := c.toInput()
 	if err != nil {
 		return err
 	}
-	spec, err := g.Client().UpdateKeySpec(context.Background(), c.ID, in)
+	spec, err := g.Client().UpdateKeySpec(ctx, c.ID, in)
 	if err != nil {
 		return err
 	}
@@ -156,8 +156,8 @@ type ksDeleteCmd struct {
 	ID string `arg:"" help:"Key spec ID."`
 }
 
-func (c *ksDeleteCmd) Run(g *Globals) error {
-	if err := g.Client().DeleteKeySpec(context.Background(), c.ID); err != nil {
+func (c *ksDeleteCmd) Run(ctx context.Context, g *Globals) error {
+	if err := g.Client().DeleteKeySpec(ctx, c.ID); err != nil {
 		return err
 	}
 	fmt.Printf("%s Deleted %s\n", output.Green.Render("✓"), c.ID)
@@ -171,8 +171,8 @@ type ksEventsCmd struct {
 	Subject string `name:"subject" help:"Filter by subject."`
 }
 
-func (c *ksEventsCmd) Run(g *Globals) error {
-	events, err := g.Client().KeySpecEvents(context.Background(), c.ID, c.Subject)
+func (c *ksEventsCmd) Run(ctx context.Context, g *Globals) error {
+	events, err := g.Client().KeySpecEvents(ctx, c.ID, c.Subject)
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ type ksWidgetSessionCmd struct {
 	TTL         string `name:"ttl" help:"Session TTL (e.g. 1h)."`
 }
 
-func (c *ksWidgetSessionCmd) Run(g *Globals) error {
+func (c *ksWidgetSessionCmd) Run(ctx context.Context, g *Globals) error {
 	claims, err := parseJSONMap(c.Claims)
 	if err != nil {
 		return err
@@ -210,7 +210,7 @@ func (c *ksWidgetSessionCmd) Run(g *Globals) error {
 		RedirectURL: c.RedirectURL,
 		TTL:         c.TTL,
 	}
-	tok, err := g.Client().CreateWidgetSession(context.Background(), c.ID, in)
+	tok, err := g.Client().CreateWidgetSession(ctx, c.ID, in)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ type ksKeysIssueCmd struct {
 	ExpiresIn string `name:"expires-in" help:"Key TTL (e.g. 90d)."`
 }
 
-func (c *ksKeysIssueCmd) Run(g *Globals) error {
+func (c *ksKeysIssueCmd) Run(ctx context.Context, g *Globals) error {
 	claims, err := parseJSONMap(c.Claims)
 	if err != nil {
 		return err
@@ -254,7 +254,7 @@ func (c *ksKeysIssueCmd) Run(g *Globals) error {
 		Metadata:  metadata,
 		ExpiresIn: c.ExpiresIn,
 	}
-	result, err := g.Client().IssueKey(context.Background(), c.SpecID, in)
+	result, err := g.Client().IssueKey(ctx, c.SpecID, in)
 	if err != nil {
 		return err
 	}
@@ -268,8 +268,8 @@ type ksKeysListCmd struct {
 	listFlags
 }
 
-func (c *ksKeysListCmd) Run(g *Globals) error {
-	page, err := g.Client().SearchSpecKeys(context.Background(), c.SpecID, c.searchRequest(nil))
+func (c *ksKeysListCmd) Run(ctx context.Context, g *Globals) error {
+	page, err := g.Client().SearchSpecKeys(ctx, c.SpecID, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
@@ -278,7 +278,7 @@ func (c *ksKeysListCmd) Run(g *Globals) error {
 	}
 	rows := make([][]string, len(page.Data))
 	for i, k := range page.Data {
-		rows[i] = []string{k.ID, k.Subject, k.Status, output.FormatTimeAgo(k.CreatedAt)}
+		rows[i] = []string{k.ID, k.Subject, output.ColorStatus(k.Status), output.FormatTimeAgo(k.CreatedAt)}
 	}
 	output.PrintTable([]string{"ID", "Subject", "Status", "Created"}, rows, false)
 	return nil
@@ -291,8 +291,8 @@ type ksKeysRevokeBySubjectCmd struct {
 	Subject string `name:"subject" help:"Subject whose keys to revoke." required:""`
 }
 
-func (c *ksKeysRevokeBySubjectCmd) Run(g *Globals) error {
-	result, err := g.Client().RevokeKeysBySubject(context.Background(), c.SpecID, c.Subject)
+func (c *ksKeysRevokeBySubjectCmd) Run(ctx context.Context, g *Globals) error {
+	result, err := g.Client().RevokeKeysBySubject(ctx, c.SpecID, c.Subject)
 	if err != nil {
 		return err
 	}

@@ -23,8 +23,8 @@ type TrustProvidersCmd struct {
 
 type tpListCmd struct{ listFlags }
 
-func (c *tpListCmd) Run(g *Globals) error {
-	page, err := g.Client().SearchTrustProviders(context.Background(), c.searchRequest(nil))
+func (c *tpListCmd) Run(ctx context.Context, g *Globals) error {
+	page, err := g.Client().SearchTrustProviders(ctx, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
@@ -45,8 +45,8 @@ type tpGetCmd struct {
 	ID string `arg:"" help:"Trust provider ID."`
 }
 
-func (c *tpGetCmd) Run(g *Globals) error {
-	p, err := g.Client().GetTrustProvider(context.Background(), c.ID)
+func (c *tpGetCmd) Run(ctx context.Context, g *Globals) error {
+	p, err := g.Client().GetTrustProvider(ctx, c.ID)
 	if err != nil {
 		return err
 	}
@@ -68,9 +68,10 @@ type tpCreateCmd struct {
 	SubjectRequired  bool   `name:"subject-required" help:"Require a subject." default:"true"`
 	TTLDefault       int64  `name:"ttl-default-seconds" help:"Default token TTL." default:"3600"`
 	TTLMax           int64  `name:"ttl-max-seconds" help:"Max token TTL." default:"3600"`
+	Active           bool   `name:"active" default:"true" help:"Whether the provider is active."`
 }
 
-func (c *tpCreateCmd) Run(g *Globals) error {
+func (c *tpCreateCmd) Run(ctx context.Context, g *Globals) error {
 	constant, err := parseJSONMap(c.ConstantClaims)
 	if err != nil {
 		return err
@@ -91,9 +92,9 @@ func (c *tpCreateCmd) Run(g *Globals) error {
 		SubjectRequired:   c.SubjectRequired,
 		TTLDefaultSeconds: c.TTLDefault,
 		TTLMaxSeconds:     c.TTLMax,
-		Active:            true,
+		Active:            c.Active,
 	}
-	p, err := g.Client().CreateTrustProvider(context.Background(), in)
+	p, err := g.Client().CreateTrustProvider(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -107,7 +108,7 @@ type tpUpdateCmd struct {
 	tpCreateCmd
 }
 
-func (c *tpUpdateCmd) Run(g *Globals) error {
+func (c *tpUpdateCmd) Run(ctx context.Context, g *Globals) error {
 	constant, err := parseJSONMap(c.ConstantClaims)
 	if err != nil {
 		return err
@@ -128,9 +129,9 @@ func (c *tpUpdateCmd) Run(g *Globals) error {
 		SubjectRequired:   c.SubjectRequired,
 		TTLDefaultSeconds: c.TTLDefault,
 		TTLMaxSeconds:     c.TTLMax,
-		Active:            true,
+		Active:            c.Active,
 	}
-	p, err := g.Client().UpdateTrustProvider(context.Background(), c.ID, in)
+	p, err := g.Client().UpdateTrustProvider(ctx, c.ID, in)
 	if err != nil {
 		return err
 	}
@@ -143,8 +144,8 @@ type tpDeleteCmd struct {
 	ID string `arg:"" help:"Trust provider ID."`
 }
 
-func (c *tpDeleteCmd) Run(g *Globals) error {
-	if err := g.Client().DeleteTrustProvider(context.Background(), c.ID); err != nil {
+func (c *tpDeleteCmd) Run(ctx context.Context, g *Globals) error {
+	if err := g.Client().DeleteTrustProvider(ctx, c.ID); err != nil {
 		return err
 	}
 	fmt.Printf("%s Deleted %s\n", output.Green.Render("✓"), c.ID)
@@ -162,7 +163,7 @@ type tpMintCmd struct {
 	TTL      int64  `name:"ttl" help:"Token TTL seconds."`
 }
 
-func (c *tpMintCmd) Run(g *Globals) error {
+func (c *tpMintCmd) Run(ctx context.Context, g *Globals) error {
 	claims, err := parseJSONMap(c.Claims)
 	if err != nil {
 		return err
@@ -174,7 +175,7 @@ func (c *tpMintCmd) Run(g *Globals) error {
 			return err
 		}
 	}
-	res, err := g.AuthClient().MintTrustProviderToken(context.Background(), c.ID, key, client.MintTokenInput{
+	res, err := g.AuthClient().MintTrustProviderToken(ctx, c.ID, key, client.MintTokenInput{
 		Subject:    c.Subject,
 		Audience:   c.Audience,
 		Claims:     claims,
@@ -192,7 +193,7 @@ type tpDiscoveryCmd struct {
 	ID string `arg:"" help:"Trust provider ID."`
 }
 
-func (c *tpDiscoveryCmd) Run(g *Globals) error {
+func (c *tpDiscoveryCmd) Run(_ context.Context, g *Globals) error {
 	base := g.authURL() + "/trust-providers/" + c.ID
 	rows := [][]string{
 		{"Issuer", base},
