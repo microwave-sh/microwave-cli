@@ -91,7 +91,7 @@ type KeySpecInput struct {
 	Description            string         `json:"description,omitempty"`
 	Format                 string         `json:"format"` // "opaque" | "jwt"
 	PermissionSetID        string         `json:"permission_set_id,omitempty"`
-	SigningKeySetID         string         `json:"signing_key_set_id,omitempty"`
+	SigningKeySetID        string         `json:"signing_key_set_id,omitempty"`
 	Opaque                 OpaqueConfig   `json:"opaque,omitempty"`
 	JWT                    JWTConfig      `json:"jwt,omitempty"`
 	Expiry                 ExpiryPolicy   `json:"expiry"`
@@ -110,7 +110,7 @@ type KeySpec struct {
 	Format                 string         `json:"format"`
 	PermissionSetID        string         `json:"permission_set_id,omitempty"`
 	PermissionSet          *PermissionSet `json:"permission_set,omitempty"`
-	SigningKeySetID         string         `json:"signing_key_set_id,omitempty"`
+	SigningKeySetID        string         `json:"signing_key_set_id,omitempty"`
 	Opaque                 OpaqueConfig   `json:"opaque,omitempty"`
 	JWT                    JWTConfig      `json:"jwt,omitempty"`
 	Expiry                 ExpiryPolicy   `json:"expiry"`
@@ -365,7 +365,7 @@ type TrustProviderInput struct {
 	Name              string                   `json:"name"`
 	Description       string                   `json:"description,omitempty"`
 	Type              string                   `json:"type"` // "oidc"
-	SigningKeySetID    string                   `json:"signing_key_set_id"`
+	SigningKeySetID   string                   `json:"signing_key_set_id"`
 	IssuerHost        string                   `json:"issuer_host,omitempty"`
 	AllowedAudiences  []string                 `json:"allowed_audiences"`
 	DefaultAudience   string                   `json:"default_audience,omitempty"`
@@ -384,7 +384,7 @@ type TrustProvider struct {
 	Name              string                   `json:"name"`
 	Description       string                   `json:"description,omitempty"`
 	Type              string                   `json:"type"`
-	SigningKeySetID    string                   `json:"signing_key_set_id"`
+	SigningKeySetID   string                   `json:"signing_key_set_id"`
 	IssuerHost        string                   `json:"issuer_host,omitempty"`
 	AllowedAudiences  []string                 `json:"allowed_audiences"`
 	DefaultAudience   string                   `json:"default_audience,omitempty"`

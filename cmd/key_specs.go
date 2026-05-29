@@ -55,7 +55,7 @@ type ksSpecFlags struct {
 	Description            string `help:"Description."`
 	Format                 string `help:"Key format (opaque|jwt)." required:""`
 	PermissionSetID        string `name:"permission-set-id" help:"Permission set ID."`
-	SigningKeySetID         string `name:"signing-key-set-id" help:"Signing key set ID."`
+	SigningKeySetID        string `name:"signing-key-set-id" help:"Signing key set ID."`
 	JWTAlgorithm           string `name:"jwt-algorithm" help:"JWT algorithm (RS256|ES256|HS256)."`
 	JWTIssuer              string `name:"jwt-issuer" help:"JWT issuer claim."`
 	JWTAudience            string `name:"jwt-audience" help:"JWT audience claim."`
@@ -81,7 +81,7 @@ func (c *ksSpecFlags) toInput() (client.KeySpecInput, error) {
 		Description:     c.Description,
 		Format:          c.Format,
 		PermissionSetID: c.PermissionSetID,
-		SigningKeySetID:  c.SigningKeySetID,
+		SigningKeySetID: c.SigningKeySetID,
 		Opaque: client.OpaqueConfig{
 			Prefix:         c.OpaquePrefix,
 			LookupResponse: c.OpaqueLookupResponse,

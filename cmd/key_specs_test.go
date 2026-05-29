@@ -14,7 +14,7 @@ func TestKSCreate_ToInput(t *testing.T) {
 		Description:            "test spec",
 		Format:                 "jwt",
 		PermissionSetID:        "ps_1",
-		SigningKeySetID:         "sks_1",
+		SigningKeySetID:        "sks_1",
 		JWTAlgorithm:           "RS256",
 		JWTIssuer:              "https://issuer.example.com",
 		JWTAudience:            "api://myapp",
