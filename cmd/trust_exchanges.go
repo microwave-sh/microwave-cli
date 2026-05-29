@@ -1,7 +1,16 @@
 package cmd
 
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"github.com/microwave-sh/microwave-cli/internal/client"
+	"github.com/microwave-sh/microwave-cli/internal/output"
+)
+
 // TrustExchangesCmd is the parent command for trust exchange management.
-// Subcommand structs are skeletons — bodies filled in Task 12.
 type TrustExchangesCmd struct {
 	List   trustExchangesListCmd   `cmd:"" help:"Search trust exchanges."`
 	Get    trustExchangesGetCmd    `cmd:"" help:"Get a trust exchange."`
@@ -10,38 +19,157 @@ type TrustExchangesCmd struct {
 	Delete trustExchangesDeleteCmd `cmd:"" help:"Delete a trust exchange."`
 }
 
-type trustExchangesListCmd struct{}
+// ── list ─────────────────────────────────────────────────────────────────
+
+type trustExchangesListCmd struct {
+	listFlags
+	Provider   string `help:"Filter by provider (github, google, auth0, custom_oidc)."`
+	OutputMode string `name:"output-mode" help:"Filter by output mode (claims, jwt)."`
+	Active     *bool  `help:"Filter by active status."`
+}
 
 func (c *trustExchangesListCmd) Run(g *Globals) error {
-	return notImplementedError{"trust-exchanges list"}
+	filter := map[string]map[string]any{}
+	if c.Provider != "" {
+		filter["provider"] = map[string]any{"eq": c.Provider}
+	}
+	if c.OutputMode != "" {
+		filter["output_mode"] = map[string]any{"eq": c.OutputMode}
+	}
+	if c.Active != nil {
+		filter["active"] = map[string]any{"eq": *c.Active}
+	}
+	var filterArg map[string]map[string]any
+	if len(filter) > 0 {
+		filterArg = filter
+	}
+	page, err := g.Client().SearchTrustExchanges(context.Background(), c.searchRequest(filterArg))
+	if err != nil {
+		return err
+	}
+	if g.IsJSON() {
+		return output.PrintJSON(page)
+	}
+	rows := make([][]string, len(page.Data))
+	for i, te := range page.Data {
+		rows[i] = []string{te.ID, te.Name, te.Provider, te.OutputMode, fmt.Sprintf("%v", te.Active)}
+	}
+	output.PrintTable([]string{"ID", "Name", "Provider", "Output", "Active"}, rows, false)
+	return nil
 }
+
+// ── get ──────────────────────────────────────────────────────────────────
 
 type trustExchangesGetCmd struct {
 	ID string `arg:"" help:"Trust exchange ID."`
 }
 
 func (c *trustExchangesGetCmd) Run(g *Globals) error {
-	return notImplementedError{"trust-exchanges get"}
+	te, err := g.Client().GetTrustExchange(context.Background(), c.ID)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(te)
 }
 
-type trustExchangesCreateCmd struct{}
+// ── create / update shared fields ────────────────────────────────────────
+
+type trustExchangesCreateCmd struct {
+	Name             string `help:"Name." required:""`
+	Description      string `help:"Description."`
+	Provider         string `help:"Provider (github, google, auth0, custom_oidc)." required:"" enum:"github,google,auth0,custom_oidc"`
+	Issuer           string `help:"OIDC issuer URL." required:""`
+	DiscoveryURL     string `name:"discovery-url" help:"Discovery document URL."`
+	JWKSURL          string `name:"jwks-url" help:"JWKS endpoint URL."`
+	AllowedAudiences string `name:"allowed-audiences" help:"Comma-separated allowed audiences." required:""`
+	SubjectExact     string `name:"subject-exact" help:"Exact subject value rule."`
+	SubjectPrefix    string `name:"subject-prefix" help:"Subject prefix rule."`
+	OutputMode       string `name:"output-mode" help:"Output mode (claims, jwt)." required:"" enum:"claims,jwt"`
+	OutputKeySpecID  string `name:"output-key-spec-id" help:"Output key spec ID (required when output-mode=jwt)."`
+	ClaimRules       string `name:"claim-rules" help:"Claim rules as JSON object (e.g. {\"repo\":{\"equals\":\"x\",\"required\":true}})."`
+	ClaimMapping     string `name:"claim-mapping" help:"Claim mapping as JSON object."`
+}
+
+// toInput builds a TrustExchangeInput from the command flags.
+func (c *trustExchangesCreateCmd) toInput() (client.TrustExchangeInput, error) {
+	in := client.TrustExchangeInput{
+		Name:             c.Name,
+		Description:      c.Description,
+		Type:             "oidc",
+		Provider:         c.Provider,
+		Issuer:           c.Issuer,
+		DiscoveryURL:     c.DiscoveryURL,
+		JWKSURL:          c.JWKSURL,
+		AllowedAudiences: parseCSV(c.AllowedAudiences),
+		SubjectRules: client.TrustExchangeSubjectRules{
+			Exact:  c.SubjectExact,
+			Prefix: c.SubjectPrefix,
+		},
+		OutputMode:      c.OutputMode,
+		OutputKeySpecID: c.OutputKeySpecID,
+		Active:          true,
+	}
+
+	if strings.TrimSpace(c.ClaimRules) != "" {
+		var rules map[string]client.TrustExchangeClaimRule
+		if err := json.Unmarshal([]byte(c.ClaimRules), &rules); err != nil {
+			return client.TrustExchangeInput{}, fmt.Errorf("invalid --claim-rules JSON: %w", err)
+		}
+		in.ClaimRules = rules
+	}
+
+	if strings.TrimSpace(c.ClaimMapping) != "" {
+		var mapping client.TrustExchangeClaimMapping
+		if err := json.Unmarshal([]byte(c.ClaimMapping), &mapping); err != nil {
+			return client.TrustExchangeInput{}, fmt.Errorf("invalid --claim-mapping JSON: %w", err)
+		}
+		in.ClaimMapping = mapping
+	}
+
+	return in, nil
+}
 
 func (c *trustExchangesCreateCmd) Run(g *Globals) error {
-	return notImplementedError{"trust-exchanges create"}
+	in, err := c.toInput()
+	if err != nil {
+		return err
+	}
+	te, err := g.Client().CreateTrustExchange(context.Background(), in)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(te)
 }
+
+// ── update ───────────────────────────────────────────────────────────────
 
 type trustExchangesUpdateCmd struct {
 	ID string `arg:"" help:"Trust exchange ID."`
+	trustExchangesCreateCmd
 }
 
 func (c *trustExchangesUpdateCmd) Run(g *Globals) error {
-	return notImplementedError{"trust-exchanges update"}
+	in, err := c.toInput()
+	if err != nil {
+		return err
+	}
+	te, err := g.Client().UpdateTrustExchange(context.Background(), c.ID, in)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(te)
 }
+
+// ── delete ───────────────────────────────────────────────────────────────
 
 type trustExchangesDeleteCmd struct {
 	ID string `arg:"" help:"Trust exchange ID."`
 }
 
 func (c *trustExchangesDeleteCmd) Run(g *Globals) error {
-	return notImplementedError{"trust-exchanges delete"}
+	if err := g.Client().DeleteTrustExchange(context.Background(), c.ID); err != nil {
+		return err
+	}
+	fmt.Printf("%s Deleted %s\n", output.Green.Render("✓"), c.ID)
+	return nil
 }
