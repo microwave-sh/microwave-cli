@@ -1,5 +1,9 @@
 # Binary output
 /microwave-cli
+/microwave
+
+# GoReleaser output
+dist/
 
 # Dependency vendor directory
 vendor/

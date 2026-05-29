@@ -1,0 +1,39 @@
+version: 2
+
+builds:
+  - main: .
+    binary: microwave
+    ldflags:
+      - -s -w -X github.com/microwave-sh/microwave-cli/internal/version.Version={{.Version}}
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats: [tar.gz]
+    name_template: "microwave_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+homebrew_casks:
+  - repository:
+      owner: microwave-sh
+      name: homebrew-microwave
+    directory: Formula
+    name: microwave
+    homepage: "https://microwave.sh"
+    description: "Command-line interface for the Microwave API"
+    binaries:
+      - microwave
+
+release:
+  github:
+    owner: microwave-sh
+    name: microwave-cli
+  # semantic-release creates the GitHub Release first; goreleaser
+  # appends archives + checksums to that existing release.
+  mode: append
