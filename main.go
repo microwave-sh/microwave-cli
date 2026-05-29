@@ -1,66 +1,62 @@
-// Copyright 2026 Mataki Labs
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
+	"context"
+	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/alecthomas/kong"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/muesli/termenv"
+	"github.com/microwave-sh/microwave-cli/cmd"
+	"github.com/microwave-sh/microwave-cli/internal/config"
+	"github.com/microwave-sh/microwave-cli/internal/version"
 )
 
-// CLI is the top-level kong command grammar.
 type CLI struct {
-	Globals
+	Token   string `env:"MICROWAVE_TOKEN" help:"Management API key." hidden:""`
+	APIURL  string `name:"api-url" env:"MICROWAVE_API_URL" help:"API base URL override." hidden:""`
+	AuthURL string `name:"auth-url" env:"MICROWAVE_AUTH_URL" help:"Auth-plane base URL override." hidden:""`
+	Output  string `name:"output" short:"o" enum:"table,json" default:"table" help:"Output format (table, json)."`
+	Debug   bool   `name:"debug" help:"Enable debug logging."`
 
-	Login       LoginCmd       `cmd:"" help:"Configure API credentials."`
-	Auth        AuthCmd        `cmd:"" help:"Authentication commands."`
-	Logout      LogoutCmd      `cmd:"" help:"Clear stored credentials."`
-	Whoami      WhoamiCmd      `cmd:"" help:"Print the authenticated identity."`
-	Version     VersionCmd     `cmd:"" help:"Print the CLI version."`
-	Config      ConfigCmd      `cmd:"" help:"Manage local Microwave configuration."`
-	Workspace   WorkspaceCmd   `cmd:"" help:"Manage workspaces."`
-	Spec        SpecCmd        `cmd:"" help:"Connect and validate OpenAPI specs."`
-	SDK         SDKCmd         `cmd:"" name:"sdk" help:"Run SDK generation jobs."`
-	Docs        DocsCmd        `cmd:"" help:"Manage generated documentation."`
-	Collections CollectionsCmd `cmd:"" help:"Manage API collections."`
-	Keys        KeysCmd        `cmd:"" help:"Issue, verify, and revoke AKaaS keys."`
-	JWKS        JWKSCmd        `cmd:"" name:"jwks" help:"Manage public JWKS sets."`
-	Console     ConsoleCmd     `cmd:"" help:"Open console URLs and fetch activity."`
-	Address     AddressCmd     `cmd:"" help:"Address and postal code operations."`
-	Encoding    EncodingCmd    `cmd:"" help:"Encoding, hashing, and format conversion."`
-	Financial   FinancialCmd   `cmd:"" help:"Currency, FX, tax, and financial calculations."`
-	Geo         GeoCmd         `cmd:"" help:"Geospatial calculations and lookups."`
-	Math        MathCmd        `cmd:"" help:"Mathematical calculations and statistics."`
-	Text        TextCmd        `cmd:"" help:"Text parsing, transformation, and analysis."`
-	Time        TimeCmd        `cmd:"" help:"Timezone, date, and scheduling operations."`
+	Login          cmd.LoginCmd          `cmd:"" help:"Store a management API key."`
+	Logout         cmd.LogoutCmd         `cmd:"" help:"Clear stored credentials."`
+	Whoami         cmd.WhoamiCmd         `cmd:"" help:"Print the authenticated identity."`
+	Version        cmd.VersionCmd        `cmd:"" help:"Print version."`
+	Completion     cmd.CompletionCmd     `cmd:"" help:"Print shell completion script."`
+	PermissionSets cmd.PermissionSetsCmd `cmd:"" name:"permission-sets" help:"Manage permission sets."`
+	KeySpecs       cmd.KeySpecsCmd       `cmd:"" name:"key-specs" help:"Manage key specs."`
+	Keys           cmd.KeysCmd           `cmd:"" help:"Manage issued keys."`
+	SigningKeySets cmd.SigningKeySetsCmd `cmd:"" name:"signing-key-sets" help:"Manage signing key sets."`
+	TrustExchanges cmd.TrustExchangesCmd `cmd:"" name:"trust-exchanges" help:"Manage trust exchanges."`
+	TrustProviders cmd.TrustProvidersCmd `cmd:"" name:"trust-providers" help:"Manage trust providers."`
 }
 
 func main() {
-	if os.Getenv("NO_COLOR") == "" && termenv.ColorProfile() == termenv.Ascii {
-		lipgloss.SetColorProfile(termenv.TrueColor)
-	}
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
-	var cli CLI
-	ctx := kong.Parse(&cli,
+	cli := CLI{}
+	kctx := kong.Parse(&cli,
 		kong.Name("microwave"),
-		kong.Description("The Microwave CLI — stateless utility APIs at your fingertips."),
+		kong.Description("Microwave — API key, JWKS, and OIDC federation management."),
 		kong.UsageOnError(),
+		kong.Bind(ctx),
 	)
-	if err := ctx.Run(&cli.Globals); err != nil {
-		ctx.FatalIfErrorf(err)
+
+	config.CheckForUpdate(version.Version)
+
+	err := kctx.Run(&cmd.Globals{
+		Token:   cli.Token,
+		APIURL:  cli.APIURL,
+		AuthURL: cli.AuthURL,
+		Output:  cli.Output,
+		Debug:   cli.Debug,
+		Version: version.Version,
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, cmd.RenderError(err))
+		os.Exit(1)
 	}
 }
