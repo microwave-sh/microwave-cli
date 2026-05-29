@@ -1,7 +1,14 @@
 package cmd
 
+import (
+	"context"
+	"fmt"
+
+	"github.com/microwave-sh/microwave-cli/internal/client"
+	"github.com/microwave-sh/microwave-cli/internal/output"
+)
+
 // SigningKeySetsCmd is the parent command for signing key set management.
-// Subcommand structs are skeletons — bodies filled in Task 11.
 type SigningKeySetsCmd struct {
 	List         signingKeySetsListCmd         `cmd:"" help:"Search signing key sets."`
 	Get          signingKeySetsGetCmd          `cmd:"" help:"Get a signing key set."`
@@ -14,11 +21,27 @@ type SigningKeySetsCmd struct {
 	Keys         signingKeySetsKeysCmd         `cmd:"" help:"Manage signing keys within a set."`
 }
 
-type signingKeySetsListCmd struct{}
+// ── list ──────────────────────────────────────────────────────────
+
+type signingKeySetsListCmd struct{ listFlags }
 
 func (c *signingKeySetsListCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets list"}
+	page, err := g.Client().SearchSigningKeySets(context.Background(), c.searchRequest(nil))
+	if err != nil {
+		return err
+	}
+	if g.IsJSON() {
+		return output.PrintJSON(page)
+	}
+	rows := make([][]string, len(page.Data))
+	for i, s := range page.Data {
+		rows[i] = []string{s.ID, s.Name, s.Kind, s.Algorithm}
+	}
+	output.PrintTable([]string{"ID", "Name", "Kind", "Algorithm"}, rows, false)
+	return nil
 }
+
+// ── get ───────────────────────────────────────────────────────────
 
 type signingKeySetsGetCmd struct {
 	Kind string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
@@ -26,23 +49,51 @@ type signingKeySetsGetCmd struct {
 }
 
 func (c *signingKeySetsGetCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets get"}
+	detail, err := g.Client().GetSigningKeySet(context.Background(), c.Kind, c.Name)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(detail)
 }
 
-type signingKeySetsCreateCmd struct{}
+// ── create ────────────────────────────────────────────────────────
+
+type signingKeySetsCreateCmd struct {
+	Kind      string `help:"Key set kind (asymmetric|symmetric)." required:"" enum:"asymmetric,symmetric"`
+	Name      string `help:"Key set name." required:""`
+	Algorithm string `help:"Signing algorithm (e.g. RS256, ES256, HS256)." required:""`
+}
 
 func (c *signingKeySetsCreateCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets create"}
+	in := client.SigningKeySetInput{
+		Name:      c.Name,
+		Kind:      c.Kind,
+		Algorithm: c.Algorithm,
+	}
+	s, err := g.Client().CreateSigningKeySet(context.Background(), in)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(s)
 }
 
+// ── update ────────────────────────────────────────────────────────
+
 type signingKeySetsUpdateCmd struct {
-	Kind string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
-	Name string `arg:"" help:"Key set name."`
+	Kind    string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
+	Name    string `arg:"" help:"Key set name."`
+	NewName string `name:"name" help:"New name for the key set." required:""`
 }
 
 func (c *signingKeySetsUpdateCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets update"}
+	s, err := g.Client().UpdateSigningKeySet(context.Background(), c.Kind, c.Name, c.NewName)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(s)
 }
+
+// ── delete ────────────────────────────────────────────────────────
 
 type signingKeySetsDeleteCmd struct {
 	Kind string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
@@ -50,17 +101,50 @@ type signingKeySetsDeleteCmd struct {
 }
 
 func (c *signingKeySetsDeleteCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets delete"}
+	if err := g.Client().DeleteSigningKeySet(context.Background(), c.Kind, c.Name); err != nil {
+		return err
+	}
+	fmt.Printf("%s Deleted %s/%s\n", output.Green.Render("✓"), c.Kind, c.Name)
+	return nil
 }
 
+// ── sign ──────────────────────────────────────────────────────────
+
 type signingKeySetsSignCmd struct {
-	Kind string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
-	Name string `arg:"" help:"Key set name."`
+	Kind    string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
+	Name    string `arg:"" help:"Key set name."`
+	Payload string `help:"JWT payload claims as a JSON object." required:""`
+	KID     string `name:"kid" help:"Key ID hint."`
+	Header  string `help:"Additional JWT header fields as a JSON object."`
+}
+
+// parseSignJWTInput is a factored helper so tests can exercise the JSON parsing
+// without invoking the HTTP client.
+func parseSignJWTInput(payload, header, kid string) (client.SignJWTInput, error) {
+	p, err := parseJSONMap(payload)
+	if err != nil {
+		return client.SignJWTInput{}, fmt.Errorf("--payload: %w", err)
+	}
+	h, err := parseJSONMap(header)
+	if err != nil {
+		return client.SignJWTInput{}, fmt.Errorf("--header: %w", err)
+	}
+	return client.SignJWTInput{Payload: p, KID: kid, Header: h}, nil
 }
 
 func (c *signingKeySetsSignCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets sign"}
+	in, err := parseSignJWTInput(c.Payload, c.Header, c.KID)
+	if err != nil {
+		return err
+	}
+	res, err := g.Client().SignJWT(context.Background(), c.Kind, c.Name, in)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(res)
 }
+
+// ── secret ────────────────────────────────────────────────────────
 
 type signingKeySetsSecretCmd struct {
 	Kind string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
@@ -68,8 +152,14 @@ type signingKeySetsSecretCmd struct {
 }
 
 func (c *signingKeySetsSecretCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets secret"}
+	state, err := g.Client().SigningKeySetSecret(context.Background(), c.Kind, c.Name)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(state)
 }
+
+// ── rotate-secret ─────────────────────────────────────────────────
 
 type signingKeySetsRotateSecretCmd struct {
 	Kind string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
@@ -77,8 +167,14 @@ type signingKeySetsRotateSecretCmd struct {
 }
 
 func (c *signingKeySetsRotateSecretCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets rotate-secret"}
+	state, err := g.Client().RotateSigningKeySetSecret(context.Background(), c.Kind, c.Name)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(state)
 }
+
+// ── keys group ────────────────────────────────────────────────────
 
 // signingKeySetsKeysCmd is the nested group for signing key lifecycle within a set.
 type signingKeySetsKeysCmd struct {
@@ -88,14 +184,22 @@ type signingKeySetsKeysCmd struct {
 	Secret   signingKeySetsKeysSecretCmd   `cmd:"" help:"Reveal a key secret (symmetric)."`
 }
 
+// ── keys generate ─────────────────────────────────────────────────
+
 type signingKeySetsKeysGenerateCmd struct {
 	Kind string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
 	Name string `arg:"" help:"Key set name."`
 }
 
 func (c *signingKeySetsKeysGenerateCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets keys generate"}
+	key, err := g.Client().GenerateSigningKey(context.Background(), c.Kind, c.Name)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(key)
 }
+
+// ── keys activate ─────────────────────────────────────────────────
 
 type signingKeySetsKeysActivateCmd struct {
 	Kind  string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
@@ -104,8 +208,14 @@ type signingKeySetsKeysActivateCmd struct {
 }
 
 func (c *signingKeySetsKeysActivateCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets keys activate"}
+	key, err := g.Client().ActivateSigningKey(context.Background(), c.Kind, c.Name, c.KeyID)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(key)
 }
+
+// ── keys revoke ───────────────────────────────────────────────────
 
 type signingKeySetsKeysRevokeCmd struct {
 	Kind  string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
@@ -114,8 +224,14 @@ type signingKeySetsKeysRevokeCmd struct {
 }
 
 func (c *signingKeySetsKeysRevokeCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets keys revoke"}
+	key, err := g.Client().RevokeSigningKey(context.Background(), c.Kind, c.Name, c.KeyID)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(key)
 }
+
+// ── keys secret ───────────────────────────────────────────────────
 
 type signingKeySetsKeysSecretCmd struct {
 	Kind  string `arg:"" help:"Key set kind (asymmetric|symmetric)."`
@@ -124,5 +240,9 @@ type signingKeySetsKeysSecretCmd struct {
 }
 
 func (c *signingKeySetsKeysSecretCmd) Run(g *Globals) error {
-	return notImplementedError{"signing-key-sets keys secret"}
+	m, err := g.Client().SigningKeySecret(context.Background(), c.Kind, c.Name, c.KeyID)
+	if err != nil {
+		return err
+	}
+	return output.PrintJSON(m)
 }
