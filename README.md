@@ -26,8 +26,11 @@ Download a pre-built binary for your platform from
 ## Quickstart
 
 ```sh
-# 1. Authenticate — grab a management key from https://app.microwave.sh
+# 1. Authenticate (opens a browser to approve this CLI)
 microwave login
+
+# In CI, skip the browser: create a key once with `microwave tokens create`
+# (or in the console) and set it as MICROWAVE_TOKEN.
 
 # 2. List your key specs
 microwave key-specs list
@@ -45,9 +48,10 @@ microwave whoami
 
 | Command | Description |
 |---|---|
-| `microwave login [<key>]` | Store a management API key |
+| `microwave login [--key <key>]` | Log in via browser device flow (or `--key` to paste a management key) |
 | `microwave logout` | Clear stored credentials |
-| `microwave whoami` | Print the authenticated identity |
+| `microwave tokens create\|list\|revoke` | Manage management API keys (for CLI/CI auth) |
+| `microwave whoami` | Print the authenticated identity (`/api/me`) |
 | `microwave version` | Print version |
 | `microwave completion <shell>` | Print shell completion script (bash/zsh/fish/powershell) |
 

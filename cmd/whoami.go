@@ -10,23 +10,16 @@ import (
 type WhoamiCmd struct{}
 
 func (c *WhoamiCmd) Run(ctx context.Context, g *Globals) error {
-	token, err := g.resolveToken()
-	if err != nil {
-		return err
-	}
-	res, err := g.Client().VerifyKey(ctx, token)
+	me, err := g.Client().Me(ctx)
 	if err != nil {
 		return err
 	}
 	if g.IsJSON() {
-		return output.PrintJSON(res)
-	}
-	if !res.Valid {
-		return fmt.Errorf("stored key is not valid (%s)", res.Code)
+		return output.PrintJSON(me)
 	}
 	output.PrintTable(
-		[]string{"Subject", "Key ID", "Scopes"},
-		[][]string{{res.Subject, res.KeyID, fmt.Sprintf("%v", res.Scopes)}},
+		[]string{"Workspace", "Actor", "Tier", "Permissions"},
+		[][]string{{me.WorkspaceID, me.Actor, me.Tier, fmt.Sprintf("%v", me.Permissions)}},
 		false,
 	)
 	return nil

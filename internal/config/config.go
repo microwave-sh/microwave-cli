@@ -78,7 +78,7 @@ func WriteGlobalAuthTo(dir, token string) error {
 	if err != nil {
 		return fmt.Errorf("write config: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	return toml.NewEncoder(f).Encode(cfg)
 }

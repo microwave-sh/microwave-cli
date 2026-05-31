@@ -20,7 +20,7 @@ type CLI struct {
 	Output  string `name:"output" short:"o" enum:"table,json" default:"table" help:"Output format (table, json)."`
 	Debug   bool   `name:"debug" help:"Enable debug logging."`
 
-	Login          cmd.LoginCmd          `cmd:"" help:"Store a management API key."`
+	Login          cmd.LoginCmd          `cmd:"" help:"Authenticate via browser device flow (or --key to paste a key)."`
 	Logout         cmd.LogoutCmd         `cmd:"" help:"Clear stored credentials."`
 	Whoami         cmd.WhoamiCmd         `cmd:"" help:"Print the authenticated identity."`
 	Version        cmd.VersionCmd        `cmd:"" help:"Print version."`
@@ -28,6 +28,7 @@ type CLI struct {
 	PermissionSets cmd.PermissionSetsCmd `cmd:"" name:"permission-sets" help:"Manage permission sets."`
 	KeySpecs       cmd.KeySpecsCmd       `cmd:"" name:"key-specs" help:"Manage key specs."`
 	Keys           cmd.KeysCmd           `cmd:"" help:"Manage issued keys."`
+	Tokens         cmd.TokensCmd         `cmd:"" help:"Manage management API keys (for CLI/CI auth)."`
 	SigningKeySets cmd.SigningKeySetsCmd `cmd:"" name:"signing-key-sets" help:"Manage signing key sets."`
 	TrustExchanges cmd.TrustExchangesCmd `cmd:"" name:"trust-exchanges" help:"Manage trust exchanges."`
 	TrustProviders cmd.TrustProvidersCmd `cmd:"" name:"trust-providers" help:"Manage trust providers."`
