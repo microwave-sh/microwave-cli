@@ -20,7 +20,7 @@ type CLI struct {
 	Output  string `name:"output" short:"o" enum:"table,json" default:"table" help:"Output format (table, json)."`
 	Debug   bool   `name:"debug" help:"Enable debug logging."`
 
-	Login          cmd.LoginCmd          `cmd:"" help:"Store a management API key."`
+	Login          cmd.LoginCmd          `cmd:"" help:"Authenticate via browser device flow (or --key to paste a key)."`
 	Logout         cmd.LogoutCmd         `cmd:"" help:"Clear stored credentials."`
 	Whoami         cmd.WhoamiCmd         `cmd:"" help:"Print the authenticated identity."`
 	Version        cmd.VersionCmd        `cmd:"" help:"Print version."`
