@@ -15,7 +15,7 @@ func TestTokensCreate(t *testing.T) {
 		if r.Method != http.MethodPost || r.URL.Path != "/api/management-keys" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 		}
-		json.NewEncoder(w).Encode(map[string]any{"id": "key_1", "key": "mw_live_secret", "name": "ci"})
+		_ = json.NewEncoder(w).Encode(map[string]any{"id": "key_1", "key": "mw_live_secret", "name": "ci"})
 	}))
 	defer srv.Close()
 

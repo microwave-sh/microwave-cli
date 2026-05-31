@@ -18,7 +18,7 @@ func TestWhoamiUsesMeEndpoint(t *testing.T) {
 		if r.Header.Get("Authorization") != "Bearer jwt-xyz" {
 			t.Errorf("missing bearer token")
 		}
-		json.NewEncoder(w).Encode(map[string]any{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"workspace_id": "org_42", "actor": "user_seth", "tier": "pro",
 			"permissions": []string{"keys:read", "keys:write"},
 		})

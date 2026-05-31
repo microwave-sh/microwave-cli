@@ -15,7 +15,7 @@ func TestDo_SetsAuthAndVersionHeaders(t *testing.T) {
 		if r.Header.Get("API-Version") != apiVersion {
 			t.Errorf("API-Version = %q", r.Header.Get("API-Version"))
 		}
-		w.Write([]byte(`{"ok":true}`))
+		_, _ = w.Write([]byte(`{"ok":true}`))
 	}))
 	defer srv.Close()
 
@@ -34,7 +34,7 @@ func TestDo_SetsAuthAndVersionHeaders(t *testing.T) {
 func TestDo_MapsAPIError(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(422)
-		w.Write([]byte(`{"type":"invalid_input","message":"bad","errors":[{"field":"name","message":"required"}]}`))
+		_, _ = w.Write([]byte(`{"type":"invalid_input","message":"bad","errors":[{"field":"name","message":"required"}]}`))
 	}))
 	defer srv.Close()
 

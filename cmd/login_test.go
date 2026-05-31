@@ -21,17 +21,17 @@ func TestLoginDeviceFlowStoresToken(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/auth/device":
-			json.NewEncoder(w).Encode(map[string]any{
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"device_code": "device_abc", "authorize_url": "https://example.invalid/authorize/device_abc",
 				"expires_in": 900, "interval": 0,
 			})
 		case "/auth/device/token":
 			polls++
 			if polls < 2 {
-				json.NewEncoder(w).Encode(map[string]any{"status": "pending"})
+				_ = json.NewEncoder(w).Encode(map[string]any{"status": "pending"})
 				return
 			}
-			json.NewEncoder(w).Encode(map[string]any{"status": "approved", "token": "jwt-xyz", "expires_in": 86400})
+			_ = json.NewEncoder(w).Encode(map[string]any{"status": "approved", "token": "jwt-xyz", "expires_in": 86400})
 		}
 	}))
 	defer srv.Close()

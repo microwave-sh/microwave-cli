@@ -17,12 +17,12 @@ func TestRequestAndPollDeviceCode(t *testing.T) {
 			if r.Header.Get("Authorization") != "" {
 				t.Errorf("device request must be tokenless")
 			}
-			json.NewEncoder(w).Encode(map[string]any{
+			_ = json.NewEncoder(w).Encode(map[string]any{
 				"device_code": "device_abc", "authorize_url": "https://app/authorize/device_abc",
 				"expires_in": 900, "interval": 5,
 			})
 		case "/auth/device/token":
-			json.NewEncoder(w).Encode(map[string]any{"status": "approved", "token": "jwt-xyz", "expires_in": 86400})
+			_ = json.NewEncoder(w).Encode(map[string]any{"status": "approved", "token": "jwt-xyz", "expires_in": 86400})
 		default:
 			http.NotFound(w, r)
 		}
