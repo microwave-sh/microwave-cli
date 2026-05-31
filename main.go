@@ -28,6 +28,7 @@ type CLI struct {
 	PermissionSets cmd.PermissionSetsCmd `cmd:"" name:"permission-sets" help:"Manage permission sets."`
 	KeySpecs       cmd.KeySpecsCmd       `cmd:"" name:"key-specs" help:"Manage key specs."`
 	Keys           cmd.KeysCmd           `cmd:"" help:"Manage issued keys."`
+	Tokens         cmd.TokensCmd         `cmd:"" help:"Manage management API keys (for CLI/CI auth)."`
 	SigningKeySets cmd.SigningKeySetsCmd `cmd:"" name:"signing-key-sets" help:"Manage signing key sets."`
 	TrustExchanges cmd.TrustExchangesCmd `cmd:"" name:"trust-exchanges" help:"Manage trust exchanges."`
 	TrustProviders cmd.TrustProvidersCmd `cmd:"" name:"trust-providers" help:"Manage trust providers."`
