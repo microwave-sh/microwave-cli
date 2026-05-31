@@ -240,3 +240,34 @@ func (c *Client) MintTrustProviderToken(ctx context.Context, providerID, apiKey 
 	var out MintTokenResult
 	return &out, c.Do(ctx, "POST", "/trust-providers/"+url.PathEscape(providerID)+"/token", in, &out)
 }
+
+// ── Device flow / identity / management keys ─────────────────────
+
+func (c *Client) RequestDeviceCode(ctx context.Context) (*DeviceCodeResponse, error) {
+	var out DeviceCodeResponse
+	return &out, c.Do(ctx, "POST", "/auth/device", map[string]any{}, &out)
+}
+
+func (c *Client) PollDeviceToken(ctx context.Context, deviceCode string) (*DeviceTokenResponse, error) {
+	var out DeviceTokenResponse
+	return &out, c.Do(ctx, "POST", "/auth/device/token", map[string]string{"device_code": deviceCode}, &out)
+}
+
+func (c *Client) Me(ctx context.Context) (*Identity, error) {
+	var out Identity
+	return &out, c.Do(ctx, "GET", "/api/me", nil, &out)
+}
+
+func (c *Client) CreateManagementKey(ctx context.Context, in ManagementKeyInput) (*ManagementKeyResult, error) {
+	var out ManagementKeyResult
+	return &out, c.Do(ctx, "POST", "/api/management-keys", in, &out)
+}
+
+func (c *Client) ListManagementKeys(ctx context.Context) ([]ManagementKey, error) {
+	var out []ManagementKey
+	return out, c.Do(ctx, "GET", "/api/management-keys", nil, &out)
+}
+
+func (c *Client) RevokeManagementKey(ctx context.Context, id string) error {
+	return c.Do(ctx, "POST", "/api/management-keys/"+url.PathEscape(id)+"/revoke", map[string]any{}, nil)
+}

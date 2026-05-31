@@ -417,3 +417,45 @@ type MintTokenResult struct {
 	ExpiresIn int64          `json:"expires_in,omitempty"`
 	Claims    map[string]any `json:"claims,omitempty"`
 }
+
+// ── Device flow / identity / management keys ─────────────────────
+
+type DeviceCodeResponse struct {
+	DeviceCode   string `json:"device_code"`
+	AuthorizeURL string `json:"authorize_url"`
+	ExpiresIn    int    `json:"expires_in"`
+	Interval     int    `json:"interval"`
+}
+
+type DeviceTokenResponse struct {
+	Status    string `json:"status"`
+	Token     string `json:"token,omitempty"`
+	ExpiresIn int    `json:"expires_in,omitempty"`
+}
+
+type Identity struct {
+	WorkspaceID string   `json:"workspace_id"`
+	Actor       string   `json:"actor"`
+	Tier        string   `json:"tier"`
+	Permissions []string `json:"permissions"`
+}
+
+type ManagementKeyInput struct {
+	Name   string   `json:"name"`
+	Scopes []string `json:"scopes,omitempty"`
+}
+
+type ManagementKey struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	KeyHint   string `json:"key_hint"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"created_at"`
+}
+
+type ManagementKeyResult struct {
+	ID      string `json:"id"`
+	Key     string `json:"key"`
+	KeyHint string `json:"key_hint"`
+	Name    string `json:"name"`
+}
