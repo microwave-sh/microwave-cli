@@ -445,14 +445,6 @@ type ManagementKeyInput struct {
 	Scopes []string `json:"scopes,omitempty"`
 }
 
-type ManagementKey struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	KeyHint   string `json:"key_hint"`
-	Status    string `json:"status"`
-	CreatedAt string `json:"created_at"`
-}
-
 type ManagementKeyResult struct {
 	ID      string `json:"id"`
 	Key     string `json:"key"`

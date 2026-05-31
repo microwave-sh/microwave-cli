@@ -263,9 +263,8 @@ func (c *Client) CreateManagementKey(ctx context.Context, in ManagementKeyInput)
 	return &out, c.Do(ctx, "POST", "/api/management-keys", in, &out)
 }
 
-func (c *Client) ListManagementKeys(ctx context.Context) ([]ManagementKey, error) {
-	var out []ManagementKey
-	return out, c.Do(ctx, "GET", "/api/management-keys", nil, &out)
+func (c *Client) SearchManagementKeys(ctx context.Context, req SearchRequest) (*SearchResponse[IssuedKey], error) {
+	return Search[IssuedKey](ctx, c, "/api/management-keys", req)
 }
 
 func (c *Client) RevokeManagementKey(ctx context.Context, id string) error {

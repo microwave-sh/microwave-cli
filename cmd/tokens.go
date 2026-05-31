@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/microwave-sh/microwave-cli/internal/client"
 	"github.com/microwave-sh/microwave-cli/internal/output"
@@ -36,16 +37,16 @@ func (c *TokensCreateCmd) Run(ctx context.Context, g *Globals) error {
 type TokensListCmd struct{}
 
 func (c *TokensListCmd) Run(ctx context.Context, g *Globals) error {
-	keys, err := g.Client().ListManagementKeys(ctx)
+	page, err := g.Client().SearchManagementKeys(ctx, client.SearchRequest{Limit: 100})
 	if err != nil {
 		return err
 	}
 	if g.IsJSON() {
-		return output.PrintJSON(keys)
+		return output.PrintJSON(page)
 	}
-	rows := make([][]string, 0, len(keys))
-	for _, k := range keys {
-		rows = append(rows, []string{k.ID, k.Name, k.KeyHint, k.Status, k.CreatedAt})
+	rows := make([][]string, 0, len(page.Data))
+	for _, k := range page.Data {
+		rows = append(rows, []string{k.ID, k.Name, k.KeyHint, k.Status, k.CreatedAt.Format(time.RFC3339)})
 	}
 	output.PrintTable([]string{"ID", "Name", "Hint", "Status", "Created"}, rows, false)
 	return nil
