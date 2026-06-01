@@ -32,6 +32,8 @@ type CLI struct {
 	SigningKeySets cmd.SigningKeySetsCmd `cmd:"" name:"signing-key-sets" help:"Manage signing key sets."`
 	TrustExchanges cmd.TrustExchangesCmd `cmd:"" name:"trust-exchanges" help:"Manage trust exchanges."`
 	TrustProviders cmd.TrustProvidersCmd `cmd:"" name:"trust-providers" help:"Manage trust providers."`
+	Connect        cmd.ConnectCmd        `cmd:"" help:"Connect a GitHub spec repo to Microwave."`
+	SDK            cmd.SDKCmd            `cmd:"" name:"sdk" help:"Manage SDK generation targets and runs."`
 }
 
 func main() {
