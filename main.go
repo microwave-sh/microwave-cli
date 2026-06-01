@@ -43,7 +43,7 @@ func main() {
 		kong.Name("microwave"),
 		kong.Description("Microwave — API key, JWKS, and OIDC federation management."),
 		kong.UsageOnError(),
-		kong.Bind(ctx),
+		kong.BindTo(ctx, (*context.Context)(nil)),
 	)
 
 	config.CheckForUpdate(version.Version)
