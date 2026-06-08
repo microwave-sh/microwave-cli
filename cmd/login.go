@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/microwave-sh/microwave-cli/internal/client"
 	"github.com/microwave-sh/microwave-cli/internal/config"
 	"github.com/microwave-sh/microwave-cli/internal/output"
 )
@@ -27,9 +29,12 @@ func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 		return fmt.Errorf("start device login: %w", err)
 	}
 
-	fmt.Printf("\n  To authorize this CLI, visit:\n  %s\n\n", output.Bold.Render(dc.AuthorizeURL))
+	fmt.Printf("\n  To authorize this CLI, visit:\n  %s\n\n", output.Bold.Render(dc.VerificationURIComplete))
+	if dc.UserCode != "" {
+		fmt.Printf("  Code: %s\n\n", output.Bold.Render(dc.UserCode))
+	}
 	if !c.NoBrowser {
-		openBrowser(dc.AuthorizeURL)
+		openBrowser(dc.VerificationURIComplete)
 	}
 	fmt.Println("  Waiting for approval...")
 
@@ -41,14 +46,18 @@ func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 		}
 		poll, err := pub.PollDeviceToken(ctx, dc.DeviceCode)
 		if err != nil {
+			if errors.Is(err, client.ErrAuthorizationPending) {
+				continue
+			}
+			if errors.Is(err, client.ErrDeviceCodeExpired) {
+				return fmt.Errorf("device code expired; run `microwave login` again")
+			}
 			return err
 		}
-		switch poll.Status {
-		case "approved":
-			return c.store(poll.Token)
-		case "expired":
-			return fmt.Errorf("device code expired; run `microwave login` again")
+		if poll.AccessToken == "" {
+			return fmt.Errorf("device token response missing access_token")
 		}
+		return c.store(poll.AccessToken)
 	}
 	return fmt.Errorf("authorization timed out")
 }

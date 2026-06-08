@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -33,10 +34,12 @@ func New(baseURL, token, version string, debug bool) *Client {
 }
 
 type APIError struct {
-	Status  int
-	Type    string `json:"type"`
-	Message string `json:"message"`
-	Errors  []struct {
+	Status           int
+	Type             string `json:"type"`
+	Message          string `json:"message"`
+	OAuthError       string `json:"error"`
+	OAuthDescription string `json:"error_description"`
+	Errors           []struct {
 		Field   string `json:"field"`
 		Code    string `json:"code"`
 		Message string `json:"message"`
@@ -44,6 +47,12 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
+	if e.OAuthError != "" {
+		if e.OAuthDescription != "" {
+			return e.OAuthError + ": " + e.OAuthDescription
+		}
+		return e.OAuthError
+	}
 	if len(e.Errors) > 0 {
 		parts := make([]string, len(e.Errors))
 		for i, fe := range e.Errors {
@@ -97,6 +106,46 @@ func (c *Client) Do(ctx context.Context, method, path string, body, out any) err
 		log.Printf("← %d\n%s", resp.StatusCode, raw)
 	}
 
+	if resp.StatusCode >= 400 {
+		apiErr := &APIError{Status: resp.StatusCode}
+		_ = json.Unmarshal(raw, apiErr)
+		return apiErr
+	}
+	if out != nil && len(raw) > 0 {
+		if err := json.Unmarshal(raw, out); err != nil {
+			return fmt.Errorf("decode response: %w", err)
+		}
+	}
+	return nil
+}
+
+func (c *Client) DoForm(ctx context.Context, method, path string, form url.Values, out any) error {
+	body := form.Encode()
+	if c.debug {
+		log.Printf("→ %s %s\n%s", method, path, body)
+	}
+	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, strings.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("API-Version", apiVersion)
+	req.Header.Set("User-Agent", "microwave-cli/"+c.version)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	raw, _ := io.ReadAll(resp.Body)
+	if c.debug {
+		log.Printf("← %d\n%s", resp.StatusCode, raw)
+	}
 	if resp.StatusCode >= 400 {
 		apiErr := &APIError{Status: resp.StatusCode}
 		_ = json.Unmarshal(raw, apiErr)
