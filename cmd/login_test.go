@@ -22,16 +22,19 @@ func TestLoginDeviceFlowStoresToken(t *testing.T) {
 		switch r.URL.Path {
 		case "/auth/device":
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"device_code": "device_abc", "authorize_url": "https://example.invalid/authorize/device_abc",
-				"expires_in": 900, "interval": 0,
+				"device_code": "device_abc", "user_code": "ABCD-EFGH",
+				"verification_uri":          "https://example.invalid/authorize",
+				"verification_uri_complete": "https://example.invalid/authorize/device_abc",
+				"expires_in":                900, "interval": 0,
 			})
 		case "/auth/device/token":
 			polls++
 			if polls < 2 {
-				_ = json.NewEncoder(w).Encode(map[string]any{"status": "pending"})
+				w.WriteHeader(http.StatusBadRequest)
+				_ = json.NewEncoder(w).Encode(map[string]any{"error": "authorization_pending"})
 				return
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"status": "approved", "token": "jwt-xyz", "expires_in": 86400})
+			_ = json.NewEncoder(w).Encode(map[string]any{"access_token": "jwt-xyz", "token_type": "Bearer", "expires_in": 86400})
 		}
 	}))
 	defer srv.Close()
