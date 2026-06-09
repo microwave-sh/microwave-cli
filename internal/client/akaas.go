@@ -231,26 +231,26 @@ func (c *Client) DeleteTrustProvider(ctx context.Context, id string) error {
 
 // ── Trust bindings ──────────────────────────────────────────────
 
-func (c *Client) CreateTrustBinding(ctx context.Context, workspaceID string, in TrustBindingInput) (*TrustBinding, error) {
+func (c *Client) CreateTrustBinding(ctx context.Context, in TrustBindingInput) (*TrustBinding, error) {
 	var out TrustBinding
-	return &out, c.Do(ctx, "POST", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings", in, &out)
+	return &out, c.Do(ctx, "POST", "/api/trust-bindings", in, &out)
 }
 
-func (c *Client) SearchTrustBindings(ctx context.Context, workspaceID string, req SearchRequest) (*SearchResponse[TrustBinding], error) {
-	return Search[TrustBinding](ctx, c, "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings", req)
+func (c *Client) SearchTrustBindings(ctx context.Context, req SearchRequest) (*SearchResponse[TrustBinding], error) {
+	return Search[TrustBinding](ctx, c, "/api/trust-bindings", req)
 }
 
-func (c *Client) GetTrustBinding(ctx context.Context, workspaceID, id string) (*TrustBinding, error) {
+func (c *Client) GetTrustBinding(ctx context.Context, id string) (*TrustBinding, error) {
 	var out TrustBinding
-	return &out, c.Do(ctx, "GET", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings/"+url.PathEscape(id), nil, &out)
+	return &out, c.Do(ctx, "GET", "/api/trust-bindings/"+url.PathEscape(id), nil, &out)
 }
 
-func (c *Client) DeleteTrustBinding(ctx context.Context, workspaceID, id string) error {
-	return c.Do(ctx, "DELETE", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings/"+url.PathEscape(id), nil, nil)
+func (c *Client) DeleteTrustBinding(ctx context.Context, id string) error {
+	return c.Do(ctx, "DELETE", "/api/trust-bindings/"+url.PathEscape(id), nil, nil)
 }
 
 func (c *Client) SearchTrustBindingTypes(ctx context.Context, req SearchRequest) (*SearchResponse[TrustBindingType], error) {
-	return Search[TrustBindingType](ctx, c, "/trust-binding-types", req)
+	return Search[TrustBindingType](ctx, c, "/api/trust-binding-types", req)
 }
 
 // ── Auth-plane ───────────────────────────────────────────────────

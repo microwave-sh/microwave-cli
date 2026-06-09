@@ -18,38 +18,15 @@ type TrustBindingsCmd struct {
 	Enable tbEnableCmd `cmd:"" help:"Enable a well-known trust binding type."`
 }
 
-type trustBindingWorkspaceFlag struct {
-	WorkspaceID string `name:"workspace-id" env:"MICROWAVE_WORKSPACE" help:"Workspace ID. Defaults to the authenticated workspace."`
-}
-
-func (f trustBindingWorkspaceFlag) resolveWorkspaceID(ctx context.Context, c *client.Client) (string, error) {
-	if f.WorkspaceID != "" {
-		return f.WorkspaceID, nil
-	}
-	me, err := c.Me(ctx)
-	if err != nil {
-		return "", err
-	}
-	if me.WorkspaceID == "" {
-		return "", fmt.Errorf("workspace id is required")
-	}
-	return me.WorkspaceID, nil
-}
-
 // ── list ────────────────────────────────────────────────────────────────
 
 type tbListCmd struct {
 	listFlags
-	trustBindingWorkspaceFlag
 }
 
 func (c *tbListCmd) Run(ctx context.Context, g *Globals) error {
 	api := g.Client()
-	workspaceID, err := c.resolveWorkspaceID(ctx, api)
-	if err != nil {
-		return err
-	}
-	page, err := api.SearchTrustBindings(ctx, workspaceID, c.searchRequest(nil))
+	page, err := api.SearchTrustBindings(ctx, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
@@ -68,16 +45,10 @@ func (c *tbListCmd) Run(ctx context.Context, g *Globals) error {
 
 type tbGetCmd struct {
 	ID string `arg:"" help:"Trust binding ID."`
-	trustBindingWorkspaceFlag
 }
 
 func (c *tbGetCmd) Run(ctx context.Context, g *Globals) error {
-	api := g.Client()
-	workspaceID, err := c.resolveWorkspaceID(ctx, api)
-	if err != nil {
-		return err
-	}
-	binding, err := api.GetTrustBinding(ctx, workspaceID, c.ID)
+	binding, err := g.Client().GetTrustBinding(ctx, c.ID)
 	if err != nil {
 		return err
 	}
@@ -90,7 +61,6 @@ type tbCreateCmd struct {
 	BindingType  string `arg:"" help:"Trust binding type key."`
 	Identity     string `name:"identity" required:"" help:"Identity claims as a JSON object."`
 	OutputClaims string `name:"output-claims" help:"Output claims as a JSON object."`
-	trustBindingWorkspaceFlag
 }
 
 func (c *tbCreateCmd) toInput() (client.TrustBindingInput, error) {
@@ -114,12 +84,7 @@ func (c *tbCreateCmd) Run(ctx context.Context, g *Globals) error {
 	if err != nil {
 		return err
 	}
-	api := g.Client()
-	workspaceID, err := c.resolveWorkspaceID(ctx, api)
-	if err != nil {
-		return err
-	}
-	binding, err := api.CreateTrustBinding(ctx, workspaceID, in)
+	binding, err := g.Client().CreateTrustBinding(ctx, in)
 	if err != nil {
 		return err
 	}
@@ -130,16 +95,10 @@ func (c *tbCreateCmd) Run(ctx context.Context, g *Globals) error {
 
 type tbDeleteCmd struct {
 	ID string `arg:"" help:"Trust binding ID."`
-	trustBindingWorkspaceFlag
 }
 
 func (c *tbDeleteCmd) Run(ctx context.Context, g *Globals) error {
-	api := g.Client()
-	workspaceID, err := c.resolveWorkspaceID(ctx, api)
-	if err != nil {
-		return err
-	}
-	if err := api.DeleteTrustBinding(ctx, workspaceID, c.ID); err != nil {
+	if err := g.Client().DeleteTrustBinding(ctx, c.ID); err != nil {
 		return err
 	}
 	fmt.Printf("%s Deleted %s\n", output.Green.Render("✓"), c.ID)
@@ -176,7 +135,6 @@ type tbEnableCmd struct {
 type tbEnableTerraformCloudCmd struct {
 	TFCOrganization string `name:"tfc-org" required:"" help:"Terraform Cloud organization name."`
 	TFCWorkspace    string `name:"tfc-workspace" required:"" help:"Terraform Cloud workspace name."`
-	trustBindingWorkspaceFlag
 }
 
 func (c *tbEnableTerraformCloudCmd) toInput() client.TrustBindingInput {
@@ -190,12 +148,7 @@ func (c *tbEnableTerraformCloudCmd) toInput() client.TrustBindingInput {
 }
 
 func (c *tbEnableTerraformCloudCmd) Run(ctx context.Context, g *Globals) error {
-	api := g.Client()
-	workspaceID, err := c.resolveWorkspaceID(ctx, api)
-	if err != nil {
-		return err
-	}
-	binding, err := api.CreateTrustBinding(ctx, workspaceID, c.toInput())
+	binding, err := g.Client().CreateTrustBinding(ctx, c.toInput())
 	if err != nil {
 		return err
 	}
@@ -205,7 +158,6 @@ func (c *tbEnableTerraformCloudCmd) Run(ctx context.Context, g *Globals) error {
 type tbEnableGitHubActionsCmd struct {
 	Repository string `name:"repository" required:"" help:"GitHub repository in owner/repo form."`
 	Workflow   string `name:"workflow" required:"" help:"Workflow filename, e.g. deploy.yml."`
-	trustBindingWorkspaceFlag
 }
 
 func (c *tbEnableGitHubActionsCmd) toInput() client.TrustBindingInput {
@@ -219,12 +171,7 @@ func (c *tbEnableGitHubActionsCmd) toInput() client.TrustBindingInput {
 }
 
 func (c *tbEnableGitHubActionsCmd) Run(ctx context.Context, g *Globals) error {
-	api := g.Client()
-	workspaceID, err := c.resolveWorkspaceID(ctx, api)
-	if err != nil {
-		return err
-	}
-	binding, err := api.CreateTrustBinding(ctx, workspaceID, c.toInput())
+	binding, err := g.Client().CreateTrustBinding(ctx, c.toInput())
 	if err != nil {
 		return err
 	}
