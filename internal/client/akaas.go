@@ -236,9 +236,8 @@ func (c *Client) CreateTrustBinding(ctx context.Context, workspaceID string, in 
 	return &out, c.Do(ctx, "POST", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings", in, &out)
 }
 
-func (c *Client) ListTrustBindings(ctx context.Context, workspaceID string) ([]TrustBinding, error) {
-	var out TrustBindingList
-	return out.Data, c.Do(ctx, "GET", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings", nil, &out)
+func (c *Client) SearchTrustBindings(ctx context.Context, workspaceID string, req SearchRequest) (*SearchResponse[TrustBinding], error) {
+	return Search[TrustBinding](ctx, c, "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings", req)
 }
 
 func (c *Client) GetTrustBinding(ctx context.Context, workspaceID, id string) (*TrustBinding, error) {
@@ -250,9 +249,8 @@ func (c *Client) DeleteTrustBinding(ctx context.Context, workspaceID, id string)
 	return c.Do(ctx, "DELETE", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings/"+url.PathEscape(id), nil, nil)
 }
 
-func (c *Client) ListTrustBindingTypes(ctx context.Context) ([]TrustBindingType, error) {
-	var out TrustBindingTypeList
-	return out.Data, c.Do(ctx, "GET", "/trust-binding-types", nil, &out)
+func (c *Client) SearchTrustBindingTypes(ctx context.Context, req SearchRequest) (*SearchResponse[TrustBindingType], error) {
+	return Search[TrustBindingType](ctx, c, "/trust-binding-types", req)
 }
 
 // ── Auth-plane ───────────────────────────────────────────────────

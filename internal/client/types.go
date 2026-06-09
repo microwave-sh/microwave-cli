@@ -415,10 +415,6 @@ type TrustBinding struct {
 	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
-type TrustBindingList struct {
-	Data []TrustBinding `json:"data"`
-}
-
 type TrustBindingTypeDefinition struct {
 	DisplayName            string   `json:"display_name"`
 	Description            string   `json:"description,omitempty"`
@@ -434,10 +430,6 @@ type TrustBindingType struct {
 	LogoURL                string   `json:"logo_url,omitempty"`
 	DocsURL                string   `json:"docs_url,omitempty"`
 	RequiredIdentityClaims []string `json:"required_identity_claims,omitempty"`
-}
-
-type TrustBindingTypeList struct {
-	Data []TrustBindingType `json:"data"`
 }
 
 // MintTokenInput is the request body for minting a trust provider token.

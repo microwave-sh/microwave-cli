@@ -39,6 +39,7 @@ func (f trustBindingWorkspaceFlag) resolveWorkspaceID(ctx context.Context, c *cl
 // ── list ────────────────────────────────────────────────────────────────
 
 type tbListCmd struct {
+	listFlags
 	trustBindingWorkspaceFlag
 }
 
@@ -48,15 +49,15 @@ func (c *tbListCmd) Run(ctx context.Context, g *Globals) error {
 	if err != nil {
 		return err
 	}
-	bindings, err := api.ListTrustBindings(ctx, workspaceID)
+	page, err := api.SearchTrustBindings(ctx, workspaceID, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
 	if g.IsJSON() {
-		return output.PrintJSON(bindings)
+		return output.PrintJSON(page)
 	}
-	rows := make([][]string, len(bindings))
-	for i, b := range bindings {
+	rows := make([][]string, len(page.Data))
+	for i, b := range page.Data {
 		rows[i] = []string{b.ID, b.BindingType, output.FormatTimeAgo(b.CreatedAt)}
 	}
 	output.PrintTable([]string{"ID", "Type", "Created"}, rows, false)
@@ -147,18 +148,18 @@ func (c *tbDeleteCmd) Run(ctx context.Context, g *Globals) error {
 
 // ── types ───────────────────────────────────────────────────────────────
 
-type tbTypesCmd struct{}
+type tbTypesCmd struct{ listFlags }
 
 func (c *tbTypesCmd) Run(ctx context.Context, g *Globals) error {
-	types, err := g.Client().ListTrustBindingTypes(ctx)
+	page, err := g.Client().SearchTrustBindingTypes(ctx, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
 	if g.IsJSON() {
-		return output.PrintJSON(types)
+		return output.PrintJSON(page)
 	}
-	rows := make([][]string, len(types))
-	for i, t := range types {
+	rows := make([][]string, len(page.Data))
+	for i, t := range page.Data {
 		rows[i] = []string{t.Key, t.DisplayName, t.DocsURL}
 	}
 	output.PrintTable([]string{"Key", "Name", "Docs"}, rows, false)
