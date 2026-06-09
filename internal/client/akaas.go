@@ -229,6 +229,32 @@ func (c *Client) DeleteTrustProvider(ctx context.Context, id string) error {
 	return c.Do(ctx, "DELETE", "/api/trust-providers/"+url.PathEscape(id), nil, nil)
 }
 
+// ── Trust bindings ──────────────────────────────────────────────
+
+func (c *Client) CreateTrustBinding(ctx context.Context, workspaceID string, in TrustBindingInput) (*TrustBinding, error) {
+	var out TrustBinding
+	return &out, c.Do(ctx, "POST", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings", in, &out)
+}
+
+func (c *Client) ListTrustBindings(ctx context.Context, workspaceID string) ([]TrustBinding, error) {
+	var out TrustBindingList
+	return out.Data, c.Do(ctx, "GET", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings", nil, &out)
+}
+
+func (c *Client) GetTrustBinding(ctx context.Context, workspaceID, id string) (*TrustBinding, error) {
+	var out TrustBinding
+	return &out, c.Do(ctx, "GET", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings/"+url.PathEscape(id), nil, &out)
+}
+
+func (c *Client) DeleteTrustBinding(ctx context.Context, workspaceID, id string) error {
+	return c.Do(ctx, "DELETE", "/workspaces/"+url.PathEscape(workspaceID)+"/trust-bindings/"+url.PathEscape(id), nil, nil)
+}
+
+func (c *Client) ListTrustBindingTypes(ctx context.Context) ([]TrustBindingType, error) {
+	var out TrustBindingTypeList
+	return out.Data, c.Do(ctx, "GET", "/trust-binding-types", nil, &out)
+}
+
 // ── Auth-plane ───────────────────────────────────────────────────
 
 // MintTrustProviderToken calls the public auth-plane mint endpoint.

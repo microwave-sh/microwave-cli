@@ -397,6 +397,49 @@ type TrustProvider struct {
 	UpdatedAt         time.Time                `json:"updated_at"`
 }
 
+// ── Trust bindings ──────────────────────────────────────────────
+
+type TrustBindingInput struct {
+	BindingType  string         `json:"binding_type"`
+	Identity     map[string]any `json:"identity"`
+	OutputClaims map[string]any `json:"output_claims,omitempty"`
+}
+
+type TrustBinding struct {
+	ID           string         `json:"id"`
+	WorkspaceID  string         `json:"workspace_id"`
+	BindingType  string         `json:"binding_type"`
+	Identity     map[string]any `json:"identity"`
+	OutputClaims map[string]any `json:"output_claims,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+}
+
+type TrustBindingList struct {
+	Data []TrustBinding `json:"data"`
+}
+
+type TrustBindingTypeDefinition struct {
+	DisplayName            string   `json:"display_name"`
+	Description            string   `json:"description,omitempty"`
+	LogoURL                string   `json:"logo_url,omitempty"`
+	DocsURL                string   `json:"docs_url,omitempty"`
+	RequiredIdentityClaims []string `json:"required_identity_claims,omitempty"`
+}
+
+type TrustBindingType struct {
+	Key                    string   `json:"key"`
+	DisplayName            string   `json:"display_name"`
+	Description            string   `json:"description,omitempty"`
+	LogoURL                string   `json:"logo_url,omitempty"`
+	DocsURL                string   `json:"docs_url,omitempty"`
+	RequiredIdentityClaims []string `json:"required_identity_claims,omitempty"`
+}
+
+type TrustBindingTypeList struct {
+	Data []TrustBindingType `json:"data"`
+}
+
 // MintTokenInput is the request body for minting a trust provider token.
 // Matches domain.MintTrustProviderTokenInput (Subject is required per server).
 type MintTokenInput struct {
