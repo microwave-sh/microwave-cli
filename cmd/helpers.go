@@ -55,3 +55,31 @@ func parseJSONMap(s string) (map[string]any, error) {
 	}
 	return m, nil
 }
+
+// parseKVMap parses a comma-separated list of key=value pairs into map[string]any.
+// Example: "terraform_organization_name=acme,terraform_workspace_name=prod"
+// Returns nil, nil for an empty or whitespace-only string.
+func parseKVMap(s string) (map[string]any, error) {
+	if strings.TrimSpace(s) == "" {
+		return nil, nil
+	}
+	parts := strings.Split(s, ",")
+	m := make(map[string]any, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		idx := strings.IndexByte(p, '=')
+		if idx < 0 {
+			return nil, fmt.Errorf("invalid key=value pair %q: missing '='", p)
+		}
+		k := strings.TrimSpace(p[:idx])
+		v := strings.TrimSpace(p[idx+1:])
+		if k == "" {
+			return nil, fmt.Errorf("invalid key=value pair %q: empty key", p)
+		}
+		m[k] = v
+	}
+	return m, nil
+}

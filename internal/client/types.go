@@ -432,6 +432,35 @@ type TrustBindingType struct {
 	RequiredIdentityClaims []string `json:"required_identity_claims,omitempty"`
 }
 
+// TrustBindingTypeDef is the full catalog row returned by the binding-types management API.
+// This maps to the server's TrustBindingTypeDef DTO from the trustbindingtypes package.
+type TrustBindingTypeDef struct {
+	ID              string    `json:"id"`
+	WorkspaceID     string    `json:"workspace_id"`
+	Key             string    `json:"key"`
+	Label           string    `json:"label"`
+	Description     string    `json:"description,omitempty"`
+	LogoURL         string    `json:"logo_url,omitempty"`
+	DocsURL         string    `json:"docs_url,omitempty"`
+	IdentityFields  []string  `json:"identity_fields"`
+	OutputKeySpecID string    `json:"output_key_spec_id,omitempty"`
+	Policy          string    `json:"policy,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+// TrustBindingTypeInput is the request body for creating a binding type catalog row.
+type TrustBindingTypeInput struct {
+	Key             string   `json:"key"`
+	Label           string   `json:"label"`
+	Description     string   `json:"description,omitempty"`
+	LogoURL         string   `json:"logo_url,omitempty"`
+	DocsURL         string   `json:"docs_url,omitempty"`
+	IdentityFields  []string `json:"identity_fields"`
+	OutputKeySpecID string   `json:"output_key_spec_id,omitempty"`
+	Policy          string   `json:"policy,omitempty"`
+}
+
 // MintTokenInput is the request body for minting a trust provider token.
 // Matches domain.MintTrustProviderTokenInput (Subject is required per server).
 type MintTokenInput struct {

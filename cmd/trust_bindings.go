@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/microwave-sh/microwave-cli/internal/client"
 	"github.com/microwave-sh/microwave-cli/internal/output"
@@ -125,53 +126,74 @@ func (c *tbTypesCmd) Run(ctx context.Context, g *Globals) error {
 	return nil
 }
 
-// ── enable helpers ─────────────────────────────────────────────────────
+// ── enable ──────────────────────────────────────────────────────────────
+//
+// enable <catalog-key> --identity k=v,k=v [--output-claims k=v,k=v]
+//
+// 1. Resolves the binding type catalog row via GET /api/trust-binding-types.
+// 2. Validates all required identity_fields are present in --identity.
+// 3. POSTs to /api/trust-bindings.
 
 type tbEnableCmd struct {
-	TerraformCloud tbEnableTerraformCloudCmd `cmd:"" name:"terraform-cloud" help:"Create a Terraform Cloud trust binding."`
-	GitHubActions  tbEnableGitHubActionsCmd  `cmd:"" name:"github-actions" help:"Create a GitHub Actions trust binding."`
+	Key          string `arg:"" help:"Binding type catalog key (e.g. terraform_cloud, github_actions)."`
+	Identity     string `name:"identity" required:"" help:"Identity fields as comma-separated key=value pairs (e.g. terraform_organization_name=acme,terraform_workspace_name=prod)."`
+	OutputClaims string `name:"output-claims" help:"Additional output claims as comma-separated key=value pairs."`
 }
 
-type tbEnableTerraformCloudCmd struct {
-	TFCOrganization string `name:"tfc-org" required:"" help:"Terraform Cloud organization name."`
-	TFCWorkspace    string `name:"tfc-workspace" required:"" help:"Terraform Cloud workspace name."`
-}
+func (c *tbEnableCmd) Run(ctx context.Context, g *Globals) error {
+	api := g.Client()
 
-func (c *tbEnableTerraformCloudCmd) toInput() client.TrustBindingInput {
-	return client.TrustBindingInput{
-		BindingType: "terraform_cloud",
-		Identity: map[string]any{
-			"terraform_organization_name": c.TFCOrganization,
-			"terraform_workspace_name":    c.TFCWorkspace,
-		},
-	}
-}
-
-func (c *tbEnableTerraformCloudCmd) Run(ctx context.Context, g *Globals) error {
-	binding, err := g.Client().CreateTrustBinding(ctx, c.toInput())
+	// Resolve the catalog row by key (list + filter client-side).
+	defs, err := api.ListTrustBindingTypeDefs(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("lookup binding type %q: %w", c.Key, err)
 	}
-	return output.PrintJSON(binding)
-}
 
-type tbEnableGitHubActionsCmd struct {
-	Repository string `name:"repository" required:"" help:"GitHub repository in owner/repo form."`
-	Workflow   string `name:"workflow" required:"" help:"Workflow filename, e.g. deploy.yml."`
-}
-
-func (c *tbEnableGitHubActionsCmd) toInput() client.TrustBindingInput {
-	return client.TrustBindingInput{
-		BindingType: "github_actions",
-		Identity: map[string]any{
-			"repository": c.Repository,
-			"workflow":   c.Workflow,
-		},
+	var matched *client.TrustBindingTypeDef
+	for i := range defs {
+		if defs[i].Key == c.Key {
+			matched = &defs[i]
+			break
+		}
 	}
-}
+	if matched == nil {
+		return fmt.Errorf("unknown binding type %q: not found in catalog (run 'binding-types list' to see available types)", c.Key)
+	}
 
-func (c *tbEnableGitHubActionsCmd) Run(ctx context.Context, g *Globals) error {
-	binding, err := g.Client().CreateTrustBinding(ctx, c.toInput())
+	// Parse identity claims.
+	identity, err := parseKVMap(c.Identity)
+	if err != nil {
+		return fmt.Errorf("--identity: %w", err)
+	}
+
+	// Client-side validation: check all required identity_fields are present.
+	var missing []string
+	for _, field := range matched.IdentityFields {
+		if _, ok := identity[field]; !ok {
+			missing = append(missing, field)
+		}
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required identity field(s) for %q: %s\n(required: %s)",
+			c.Key,
+			strings.Join(missing, ", "),
+			strings.Join(matched.IdentityFields, ", "),
+		)
+	}
+
+	// Parse optional output claims.
+	outputClaims, err := parseKVMap(c.OutputClaims)
+	if err != nil {
+		return fmt.Errorf("--output-claims: %w", err)
+	}
+
+	in := client.TrustBindingInput{
+		BindingType:  c.Key,
+		Identity:     identity,
+		OutputClaims: outputClaims,
+	}
+
+	binding, err := api.CreateTrustBinding(ctx, in)
 	if err != nil {
 		return err
 	}

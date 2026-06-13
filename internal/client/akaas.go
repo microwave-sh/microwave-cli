@@ -229,6 +229,27 @@ func (c *Client) DeleteTrustProvider(ctx context.Context, id string) error {
 	return c.Do(ctx, "DELETE", "/api/trust-providers/"+url.PathEscape(id), nil, nil)
 }
 
+// ── Trust binding types (catalog management) ────────────────────
+
+func (c *Client) CreateTrustBindingTypeDef(ctx context.Context, in TrustBindingTypeInput) (*TrustBindingTypeDef, error) {
+	var out TrustBindingTypeDef
+	return &out, c.Do(ctx, "POST", "/api/trust-binding-types", in, &out)
+}
+
+func (c *Client) ListTrustBindingTypeDefs(ctx context.Context) ([]TrustBindingTypeDef, error) {
+	var out []TrustBindingTypeDef
+	return out, c.Do(ctx, "GET", "/api/trust-binding-types", nil, &out)
+}
+
+func (c *Client) GetTrustBindingTypeDef(ctx context.Context, id string) (*TrustBindingTypeDef, error) {
+	var out TrustBindingTypeDef
+	return &out, c.Do(ctx, "GET", "/api/trust-binding-types/"+url.PathEscape(id), nil, &out)
+}
+
+func (c *Client) DeleteTrustBindingTypeDef(ctx context.Context, id string) error {
+	return c.Do(ctx, "DELETE", "/api/trust-binding-types/"+url.PathEscape(id), nil, nil)
+}
+
 // ── Trust bindings ──────────────────────────────────────────────
 
 func (c *Client) CreateTrustBinding(ctx context.Context, in TrustBindingInput) (*TrustBinding, error) {
