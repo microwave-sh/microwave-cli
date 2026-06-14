@@ -409,7 +409,6 @@ type TrustFederationBinding struct {
 	ID            string         `json:"id"`
 	WorkspaceID   string         `json:"workspace_id"`
 	FederationKey string         `json:"federation_key"`
-	FederationID  string         `json:"federation_id"`
 	Identity      map[string]any `json:"identity"`
 	OutputClaims  map[string]any `json:"output_claims,omitempty"`
 	CreatedAt     time.Time      `json:"created_at"`
@@ -426,9 +425,12 @@ type TrustFederation struct {
 	Description     string    `json:"description,omitempty"`
 	LogoURL         string    `json:"logo_url,omitempty"`
 	DocsURL         string    `json:"docs_url,omitempty"`
+	Issuer          string    `json:"issuer,omitempty"`
+	Audience        string    `json:"audience,omitempty"`
 	IdentityFields  []string  `json:"identity_fields"`
 	OutputKeySpecID string    `json:"output_key_spec_id,omitempty"`
 	Policy          string    `json:"policy,omitempty"`
+	PolicyOverride  string    `json:"policy_override,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
@@ -440,9 +442,12 @@ type TrustFederationInput struct {
 	Description     string   `json:"description,omitempty"`
 	LogoURL         string   `json:"logo_url,omitempty"`
 	DocsURL         string   `json:"docs_url,omitempty"`
+	Issuer          string   `json:"issuer,omitempty"`
+	Audience        string   `json:"audience,omitempty"`
 	IdentityFields  []string `json:"identity_fields"`
 	OutputKeySpecID string   `json:"output_key_spec_id,omitempty"`
 	Policy          string   `json:"policy,omitempty"`
+	PolicyOverride  string   `json:"policy_override,omitempty"`
 }
 
 // MintTokenInput is the request body for minting a trust provider token.
