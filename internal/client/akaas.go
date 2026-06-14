@@ -235,6 +235,47 @@ func (c *Client) DeleteTrustProvider(ctx context.Context, id string) error {
 	return c.Do(ctx, "DELETE", "/api/trust-providers/"+url.PathEscape(id), nil, nil)
 }
 
+// ── Trust federations (catalog management) ───────────────────────
+
+func (c *Client) CreateTrustFederation(ctx context.Context, in TrustFederationInput) (*TrustFederation, error) {
+	var out TrustFederation
+	return &out, c.Do(ctx, "POST", "/api/trust-federations", in, &out)
+}
+
+func (c *Client) ListTrustFederations(ctx context.Context) ([]TrustFederation, error) {
+	var out []TrustFederation
+	return out, c.Do(ctx, "GET", "/api/trust-federations", nil, &out)
+}
+
+func (c *Client) GetTrustFederation(ctx context.Context, id string) (*TrustFederation, error) {
+	var out TrustFederation
+	return &out, c.Do(ctx, "GET", "/api/trust-federations/"+url.PathEscape(id), nil, &out)
+}
+
+func (c *Client) DeleteTrustFederation(ctx context.Context, id string) error {
+	return c.Do(ctx, "DELETE", "/api/trust-federations/"+url.PathEscape(id), nil, nil)
+}
+
+// ── Trust federation bindings ─────────────────────────────────────
+
+func (c *Client) CreateTrustFederationBinding(ctx context.Context, in TrustFederationBindingInput) (*TrustFederationBinding, error) {
+	var out TrustFederationBinding
+	return &out, c.Do(ctx, "POST", "/api/trust-federation-bindings", in, &out)
+}
+
+func (c *Client) SearchTrustFederationBindings(ctx context.Context, req SearchRequest) (*SearchResponse[TrustFederationBinding], error) {
+	return Search[TrustFederationBinding](ctx, c, "/api/trust-federation-bindings", req)
+}
+
+func (c *Client) GetTrustFederationBinding(ctx context.Context, id string) (*TrustFederationBinding, error) {
+	var out TrustFederationBinding
+	return &out, c.Do(ctx, "GET", "/api/trust-federation-bindings/"+url.PathEscape(id), nil, &out)
+}
+
+func (c *Client) DeleteTrustFederationBinding(ctx context.Context, id string) error {
+	return c.Do(ctx, "DELETE", "/api/trust-federation-bindings/"+url.PathEscape(id), nil, nil)
+}
+
 // ── Auth-plane ───────────────────────────────────────────────────
 
 // MintTrustProviderToken calls the public auth-plane mint endpoint.

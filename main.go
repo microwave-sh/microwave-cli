@@ -30,8 +30,10 @@ type CLI struct {
 	Keys           cmd.KeysCmd           `cmd:"" help:"Manage issued keys."`
 	Tokens         cmd.TokensCmd         `cmd:"" help:"Manage management API keys (for CLI/CI auth)."`
 	SigningKeySets cmd.SigningKeySetsCmd `cmd:"" name:"signing-key-sets" help:"Manage signing key sets."`
-	TrustExchanges cmd.TrustExchangesCmd `cmd:"" name:"trust-exchanges" help:"Manage trust exchanges."`
-	TrustProviders cmd.TrustProvidersCmd `cmd:"" name:"trust-providers" help:"Manage trust providers."`
+	TrustExchanges     cmd.TrustExchangesCmd     `cmd:"" name:"trust-exchanges" help:"Manage trust exchanges."`
+	TrustProviders     cmd.TrustProvidersCmd     `cmd:"" name:"trust-providers" help:"Manage trust providers."`
+	Federations        cmd.FederationsCmd        `cmd:"" name:"federations" help:"Manage trust federation catalog."`
+	FederationBindings cmd.FederationBindingsCmd `cmd:"" name:"federation-bindings" help:"Manage trust federation bindings."`
 }
 
 func main() {

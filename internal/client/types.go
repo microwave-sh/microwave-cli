@@ -397,6 +397,59 @@ type TrustProvider struct {
 	UpdatedAt         time.Time                `json:"updated_at"`
 }
 
+// ── Trust federation bindings ─────────────────────────────────────
+
+type TrustFederationBindingInput struct {
+	FederationKey string         `json:"federation_key"`
+	Identity      map[string]any `json:"identity"`
+	OutputClaims  map[string]any `json:"output_claims,omitempty"`
+}
+
+type TrustFederationBinding struct {
+	ID            string         `json:"id"`
+	WorkspaceID   string         `json:"workspace_id"`
+	FederationKey string         `json:"federation_key"`
+	Identity      map[string]any `json:"identity"`
+	OutputClaims  map[string]any `json:"output_claims,omitempty"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+}
+
+// TrustFederation is the full catalog row returned by the federations management API.
+// This maps to the server's TrustFederationDef DTO.
+type TrustFederation struct {
+	ID              string    `json:"id"`
+	WorkspaceID     string    `json:"workspace_id"`
+	Key             string    `json:"key"`
+	Label           string    `json:"label"`
+	Description     string    `json:"description,omitempty"`
+	LogoURL         string    `json:"logo_url,omitempty"`
+	DocsURL         string    `json:"docs_url,omitempty"`
+	Issuer          string    `json:"issuer,omitempty"`
+	Audience        string    `json:"audience,omitempty"`
+	IdentityFields  []string  `json:"identity_fields"`
+	OutputKeySpecID string    `json:"output_key_spec_id,omitempty"`
+	Policy          string    `json:"policy,omitempty"`
+	PolicyOverride  string    `json:"policy_override,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+// TrustFederationInput is the request body for creating a federation catalog row.
+type TrustFederationInput struct {
+	Key             string   `json:"key"`
+	Label           string   `json:"label"`
+	Description     string   `json:"description,omitempty"`
+	LogoURL         string   `json:"logo_url,omitempty"`
+	DocsURL         string   `json:"docs_url,omitempty"`
+	Issuer          string   `json:"issuer,omitempty"`
+	Audience        string   `json:"audience,omitempty"`
+	IdentityFields  []string `json:"identity_fields"`
+	OutputKeySpecID string   `json:"output_key_spec_id,omitempty"`
+	Policy          string   `json:"policy,omitempty"`
+	PolicyOverride  string   `json:"policy_override,omitempty"`
+}
+
 // MintTokenInput is the request body for minting a trust provider token.
 // Matches domain.MintTrustProviderTokenInput (Subject is required per server).
 type MintTokenInput struct {
