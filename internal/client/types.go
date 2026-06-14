@@ -397,44 +397,28 @@ type TrustProvider struct {
 	UpdatedAt         time.Time                `json:"updated_at"`
 }
 
-// ── Trust bindings ──────────────────────────────────────────────
+// ── Trust federation bindings ─────────────────────────────────────
 
-type TrustBindingInput struct {
-	BindingType  string         `json:"binding_type"`
-	Identity     map[string]any `json:"identity"`
-	OutputClaims map[string]any `json:"output_claims,omitempty"`
+type TrustFederationBindingInput struct {
+	FederationKey string         `json:"federation_key"`
+	Identity      map[string]any `json:"identity"`
+	OutputClaims  map[string]any `json:"output_claims,omitempty"`
 }
 
-type TrustBinding struct {
-	ID           string         `json:"id"`
-	WorkspaceID  string         `json:"workspace_id"`
-	BindingType  string         `json:"binding_type"`
-	Identity     map[string]any `json:"identity"`
-	OutputClaims map[string]any `json:"output_claims,omitempty"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
+type TrustFederationBinding struct {
+	ID            string         `json:"id"`
+	WorkspaceID   string         `json:"workspace_id"`
+	FederationKey string         `json:"federation_key"`
+	FederationID  string         `json:"federation_id"`
+	Identity      map[string]any `json:"identity"`
+	OutputClaims  map[string]any `json:"output_claims,omitempty"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
-type TrustBindingTypeDefinition struct {
-	DisplayName            string   `json:"display_name"`
-	Description            string   `json:"description,omitempty"`
-	LogoURL                string   `json:"logo_url,omitempty"`
-	DocsURL                string   `json:"docs_url,omitempty"`
-	RequiredIdentityClaims []string `json:"required_identity_claims,omitempty"`
-}
-
-type TrustBindingType struct {
-	Key                    string   `json:"key"`
-	DisplayName            string   `json:"display_name"`
-	Description            string   `json:"description,omitempty"`
-	LogoURL                string   `json:"logo_url,omitempty"`
-	DocsURL                string   `json:"docs_url,omitempty"`
-	RequiredIdentityClaims []string `json:"required_identity_claims,omitempty"`
-}
-
-// TrustBindingTypeDef is the full catalog row returned by the binding-types management API.
-// This maps to the server's TrustBindingTypeDef DTO from the trustbindingtypes package.
-type TrustBindingTypeDef struct {
+// TrustFederation is the full catalog row returned by the federations management API.
+// This maps to the server's TrustFederationDef DTO.
+type TrustFederation struct {
 	ID              string    `json:"id"`
 	WorkspaceID     string    `json:"workspace_id"`
 	Key             string    `json:"key"`
@@ -449,8 +433,8 @@ type TrustBindingTypeDef struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
-// TrustBindingTypeInput is the request body for creating a binding type catalog row.
-type TrustBindingTypeInput struct {
+// TrustFederationInput is the request body for creating a federation catalog row.
+type TrustFederationInput struct {
 	Key             string   `json:"key"`
 	Label           string   `json:"label"`
 	Description     string   `json:"description,omitempty"`

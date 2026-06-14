@@ -12,17 +12,9 @@ import (
 	"github.com/microwave-sh/microwave-cli/internal/client"
 )
 
-// newTestGlobals returns a Globals wired to the given test server URL.
-func newTestGlobals(serverURL string) *Globals {
-	return &Globals{
-		Token:  "test-token",
-		APIURL: serverURL,
-	}
-}
-
-func TestCmdBindingTypes_Create(t *testing.T) {
-	want := client.TrustBindingTypeDef{
-		ID:             "tbt_abc123",
+func TestCmdFederations_Create(t *testing.T) {
+	want := client.TrustFederation{
+		ID:             "fed_abc123",
 		WorkspaceID:    "ws_1",
 		Key:            "acme_tfc",
 		Label:          "Acme TFC",
@@ -31,9 +23,9 @@ func TestCmdBindingTypes_Create(t *testing.T) {
 		UpdatedAt:      time.Now().UTC().Truncate(time.Second),
 	}
 
-	var gotBody client.TrustBindingTypeInput
+	var gotBody client.TrustFederationInput
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/api/trust-binding-types" {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/trust-federations" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -47,7 +39,7 @@ func TestCmdBindingTypes_Create(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	cmd := &btCreateCmd{
+	cmd := &fedCreateCmd{
 		Key:            "acme_tfc",
 		Label:          "Acme TFC",
 		IdentityFields: "a,b",
@@ -73,16 +65,16 @@ func TestCmdBindingTypes_Create(t *testing.T) {
 	}
 }
 
-func TestCmdBindingTypes_List_IncludesSystemAndOwn(t *testing.T) {
-	rows := []client.TrustBindingTypeDef{
-		{ID: "tbt_sys1", WorkspaceID: "SYSTEM", Key: "terraform_cloud", Label: "Terraform Cloud"},
-		{ID: "tbt_sys2", WorkspaceID: "SYSTEM", Key: "github_actions", Label: "GitHub Actions"},
-		{ID: "tbt_sys3", WorkspaceID: "SYSTEM", Key: "google_workload_identity", Label: "Google Workload Identity"},
-		{ID: "tbt_own1", WorkspaceID: "ws_1", Key: "acme_custom", Label: "Acme Custom"},
+func TestCmdFederations_List_IncludesSystemAndOwn(t *testing.T) {
+	rows := []client.TrustFederation{
+		{ID: "fed_sys1", WorkspaceID: "SYSTEM", Key: "terraform_cloud", Label: "Terraform Cloud"},
+		{ID: "fed_sys2", WorkspaceID: "SYSTEM", Key: "github_actions", Label: "GitHub Actions"},
+		{ID: "fed_sys3", WorkspaceID: "SYSTEM", Key: "google_workload_identity", Label: "Google Workload Identity"},
+		{ID: "fed_own1", WorkspaceID: "ws_1", Key: "acme_custom", Label: "Acme Custom"},
 	}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/api/trust-binding-types" {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/trust-federations" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -92,13 +84,13 @@ func TestCmdBindingTypes_List_IncludesSystemAndOwn(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	cmd := &btListCmd{}
+	cmd := &fedListCmd{}
 	g := newTestGlobals(srv.URL)
 
 	// Call the underlying client directly to test listing returns all 4.
-	defs, err := g.Client().ListTrustBindingTypeDefs(context.Background())
+	defs, err := g.Client().ListTrustFederations(context.Background())
 	if err != nil {
-		t.Fatalf("ListTrustBindingTypeDefs: %v", err)
+		t.Fatalf("ListTrustFederations: %v", err)
 	}
 	if len(defs) != 4 {
 		t.Fatalf("len(defs) = %d, want 4", len(defs))
@@ -116,12 +108,12 @@ func TestCmdBindingTypes_List_IncludesSystemAndOwn(t *testing.T) {
 
 	// Also verify Run does not error.
 	if err := cmd.Run(context.Background(), g); err != nil {
-		t.Fatalf("btListCmd.Run: %v", err)
+		t.Fatalf("fedListCmd.Run: %v", err)
 	}
 }
 
-func TestCmdBindingTypes_Delete(t *testing.T) {
-	const targetID = "tbt_xxx"
+func TestCmdFederations_Delete(t *testing.T) {
+	const targetID = "fed_xxx"
 	var gotMethod, gotPath string
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +123,7 @@ func TestCmdBindingTypes_Delete(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	cmd := &btDeleteCmd{ID: targetID}
+	cmd := &fedDeleteCmd{ID: targetID}
 	g := newTestGlobals(srv.URL)
 
 	if err := cmd.Run(context.Background(), g); err != nil {
@@ -141,15 +133,15 @@ func TestCmdBindingTypes_Delete(t *testing.T) {
 	if gotMethod != http.MethodDelete {
 		t.Errorf("method = %s, want DELETE", gotMethod)
 	}
-	wantPath := "/api/trust-binding-types/" + targetID
+	wantPath := "/api/trust-federations/" + targetID
 	if gotPath != wantPath {
 		t.Errorf("path = %s, want %s", gotPath, wantPath)
 	}
 }
 
-// TestBtCreateCmd_ToInput exercises flag→input mapping without an HTTP server.
-func TestBtCreateCmd_ToInput(t *testing.T) {
-	cmd := btCreateCmd{
+// TestFedCreateCmd_ToInput exercises flag→input mapping without an HTTP server.
+func TestFedCreateCmd_ToInput(t *testing.T) {
+	cmd := fedCreateCmd{
 		Key:            "acme_tfc",
 		Label:          "Acme TFC",
 		IdentityFields: "org,workspace",

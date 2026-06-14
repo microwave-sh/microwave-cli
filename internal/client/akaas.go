@@ -229,49 +229,45 @@ func (c *Client) DeleteTrustProvider(ctx context.Context, id string) error {
 	return c.Do(ctx, "DELETE", "/api/trust-providers/"+url.PathEscape(id), nil, nil)
 }
 
-// ── Trust binding types (catalog management) ────────────────────
+// ── Trust federations (catalog management) ───────────────────────
 
-func (c *Client) CreateTrustBindingTypeDef(ctx context.Context, in TrustBindingTypeInput) (*TrustBindingTypeDef, error) {
-	var out TrustBindingTypeDef
-	return &out, c.Do(ctx, "POST", "/api/trust-binding-types", in, &out)
+func (c *Client) CreateTrustFederation(ctx context.Context, in TrustFederationInput) (*TrustFederation, error) {
+	var out TrustFederation
+	return &out, c.Do(ctx, "POST", "/api/trust-federations", in, &out)
 }
 
-func (c *Client) ListTrustBindingTypeDefs(ctx context.Context) ([]TrustBindingTypeDef, error) {
-	var out []TrustBindingTypeDef
-	return out, c.Do(ctx, "GET", "/api/trust-binding-types", nil, &out)
+func (c *Client) ListTrustFederations(ctx context.Context) ([]TrustFederation, error) {
+	var out []TrustFederation
+	return out, c.Do(ctx, "GET", "/api/trust-federations", nil, &out)
 }
 
-func (c *Client) GetTrustBindingTypeDef(ctx context.Context, id string) (*TrustBindingTypeDef, error) {
-	var out TrustBindingTypeDef
-	return &out, c.Do(ctx, "GET", "/api/trust-binding-types/"+url.PathEscape(id), nil, &out)
+func (c *Client) GetTrustFederation(ctx context.Context, id string) (*TrustFederation, error) {
+	var out TrustFederation
+	return &out, c.Do(ctx, "GET", "/api/trust-federations/"+url.PathEscape(id), nil, &out)
 }
 
-func (c *Client) DeleteTrustBindingTypeDef(ctx context.Context, id string) error {
-	return c.Do(ctx, "DELETE", "/api/trust-binding-types/"+url.PathEscape(id), nil, nil)
+func (c *Client) DeleteTrustFederation(ctx context.Context, id string) error {
+	return c.Do(ctx, "DELETE", "/api/trust-federations/"+url.PathEscape(id), nil, nil)
 }
 
-// ── Trust bindings ──────────────────────────────────────────────
+// ── Trust federation bindings ─────────────────────────────────────
 
-func (c *Client) CreateTrustBinding(ctx context.Context, in TrustBindingInput) (*TrustBinding, error) {
-	var out TrustBinding
-	return &out, c.Do(ctx, "POST", "/api/trust-bindings", in, &out)
+func (c *Client) CreateTrustFederationBinding(ctx context.Context, in TrustFederationBindingInput) (*TrustFederationBinding, error) {
+	var out TrustFederationBinding
+	return &out, c.Do(ctx, "POST", "/api/trust-federation-bindings", in, &out)
 }
 
-func (c *Client) SearchTrustBindings(ctx context.Context, req SearchRequest) (*SearchResponse[TrustBinding], error) {
-	return Search[TrustBinding](ctx, c, "/api/trust-bindings", req)
+func (c *Client) SearchTrustFederationBindings(ctx context.Context, req SearchRequest) (*SearchResponse[TrustFederationBinding], error) {
+	return Search[TrustFederationBinding](ctx, c, "/api/trust-federation-bindings", req)
 }
 
-func (c *Client) GetTrustBinding(ctx context.Context, id string) (*TrustBinding, error) {
-	var out TrustBinding
-	return &out, c.Do(ctx, "GET", "/api/trust-bindings/"+url.PathEscape(id), nil, &out)
+func (c *Client) GetTrustFederationBinding(ctx context.Context, id string) (*TrustFederationBinding, error) {
+	var out TrustFederationBinding
+	return &out, c.Do(ctx, "GET", "/api/trust-federation-bindings/"+url.PathEscape(id), nil, &out)
 }
 
-func (c *Client) DeleteTrustBinding(ctx context.Context, id string) error {
-	return c.Do(ctx, "DELETE", "/api/trust-bindings/"+url.PathEscape(id), nil, nil)
-}
-
-func (c *Client) SearchTrustBindingTypes(ctx context.Context, req SearchRequest) (*SearchResponse[TrustBindingType], error) {
-	return Search[TrustBindingType](ctx, c, "/api/trust-binding-types", req)
+func (c *Client) DeleteTrustFederationBinding(ctx context.Context, id string) error {
+	return c.Do(ctx, "DELETE", "/api/trust-federation-bindings/"+url.PathEscape(id), nil, nil)
 }
 
 // ── Auth-plane ───────────────────────────────────────────────────

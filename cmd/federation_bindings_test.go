@@ -11,18 +11,18 @@ import (
 	"github.com/microwave-sh/microwave-cli/internal/client"
 )
 
-func TestTBCreate_ToInput(t *testing.T) {
-	c := tbCreateCmd{
-		BindingType:  "custom_ci",
-		Identity:     `{"repository":"octocat/hello-world","workflow":"deploy.yml"}`,
-		OutputClaims: `{"tier":"prod"}`,
+func TestFBCreate_ToInput(t *testing.T) {
+	c := fbCreateCmd{
+		FederationKey: "custom_ci",
+		Identity:      `{"repository":"octocat/hello-world","workflow":"deploy.yml"}`,
+		OutputClaims:  `{"tier":"prod"}`,
 	}
 	in, err := c.toInput()
 	if err != nil {
 		t.Fatalf("toInput: %v", err)
 	}
-	if in.BindingType != "custom_ci" {
-		t.Fatalf("BindingType = %q, want custom_ci", in.BindingType)
+	if in.FederationKey != "custom_ci" {
+		t.Fatalf("FederationKey = %q, want custom_ci", in.FederationKey)
 	}
 	if in.Identity["repository"] != "octocat/hello-world" {
 		t.Fatalf("Identity[repository] = %v", in.Identity["repository"])
@@ -32,25 +32,25 @@ func TestTBCreate_ToInput(t *testing.T) {
 	}
 }
 
-func TestTBCreate_ToInput_InvalidIdentityJSON(t *testing.T) {
-	c := tbCreateCmd{
-		BindingType: "custom_ci",
-		Identity:    `{bad json`,
+func TestFBCreate_ToInput_InvalidIdentityJSON(t *testing.T) {
+	c := fbCreateCmd{
+		FederationKey: "custom_ci",
+		Identity:      `{bad json`,
 	}
 	if _, err := c.toInput(); err == nil {
 		t.Fatal("expected error for invalid identity JSON")
 	}
 }
 
-// ── enable (positional, catalog-backed) ─────────────────────────────────────
+// ── bind (positional, catalog-backed) ───────────────────────────────────────
 
-func TestCmdConnectorsEnable_PositionalKey(t *testing.T) {
-	// Stub: GET /api/trust-binding-types → returns a SYSTEM terraform_cloud type.
-	// POST /api/trust-bindings → returns a created binding.
+func TestCmdFederationsBind_PositionalKey(t *testing.T) {
+	// Stub: GET /api/trust-federations → returns a SYSTEM terraform_cloud federation.
+	// POST /api/trust-federation-bindings → returns a created binding.
 
-	defList := []client.TrustBindingTypeDef{
+	fedList := []client.TrustFederation{
 		{
-			ID:             "tbt_tfc",
+			ID:             "fed_tfc",
 			WorkspaceID:    "SYSTEM",
 			Key:            "terraform_cloud",
 			Label:          "Terraform Cloud",
@@ -58,22 +58,22 @@ func TestCmdConnectorsEnable_PositionalKey(t *testing.T) {
 		},
 	}
 
-	var gotBindingBody client.TrustBindingInput
+	var gotBindingBody client.TrustFederationBindingInput
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/api/trust-binding-types":
+		case r.Method == http.MethodGet && r.URL.Path == "/api/trust-federations":
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(defList)
+			_ = json.NewEncoder(w).Encode(fedList)
 
-		case r.Method == http.MethodPost && r.URL.Path == "/api/trust-bindings":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/trust-federation-bindings":
 			if err := json.NewDecoder(r.Body).Decode(&gotBindingBody); err != nil {
 				t.Fatalf("decode binding body: %v", err)
 			}
-			result := client.TrustBinding{
-				ID:          "tb_new",
-				WorkspaceID: "ws_1",
-				BindingType: gotBindingBody.BindingType,
-				Identity:    gotBindingBody.Identity,
+			result := client.TrustFederationBinding{
+				ID:            "fb_new",
+				WorkspaceID:   "ws_1",
+				FederationKey: gotBindingBody.FederationKey,
+				Identity:      gotBindingBody.Identity,
 			}
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
@@ -86,7 +86,7 @@ func TestCmdConnectorsEnable_PositionalKey(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	cmd := &tbEnableCmd{
+	cmd := &fbBindCmd{
 		Key:      "terraform_cloud",
 		Identity: "terraform_organization_name=acme,terraform_workspace_name=prod",
 	}
@@ -96,8 +96,8 @@ func TestCmdConnectorsEnable_PositionalKey(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 
-	if gotBindingBody.BindingType != "terraform_cloud" {
-		t.Errorf("BindingType = %q, want terraform_cloud", gotBindingBody.BindingType)
+	if gotBindingBody.FederationKey != "terraform_cloud" {
+		t.Errorf("FederationKey = %q, want terraform_cloud", gotBindingBody.FederationKey)
 	}
 	if gotBindingBody.Identity["terraform_organization_name"] != "acme" {
 		t.Errorf("Identity[terraform_organization_name] = %v, want acme", gotBindingBody.Identity["terraform_organization_name"])
@@ -107,12 +107,12 @@ func TestCmdConnectorsEnable_PositionalKey(t *testing.T) {
 	}
 }
 
-func TestCmdConnectorsEnable_MissingIdentityField(t *testing.T) {
-	// Stub returns a binding type requiring fields A and B.
+func TestCmdFederationsBind_MissingIdentityField(t *testing.T) {
+	// Stub returns a federation requiring fields A and B.
 	// CLI only provides A — expect client-side error naming "B".
-	defList := []client.TrustBindingTypeDef{
+	fedList := []client.TrustFederation{
 		{
-			ID:             "tbt_x",
+			ID:             "fed_x",
 			WorkspaceID:    "SYSTEM",
 			Key:            "needs_two_fields",
 			Label:          "Needs Two Fields",
@@ -121,9 +121,9 @@ func TestCmdConnectorsEnable_MissingIdentityField(t *testing.T) {
 	}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet && r.URL.Path == "/api/trust-binding-types" {
+		if r.Method == http.MethodGet && r.URL.Path == "/api/trust-federations" {
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(defList)
+			_ = json.NewEncoder(w).Encode(fedList)
 			return
 		}
 		// POST should NOT be reached.
@@ -132,7 +132,7 @@ func TestCmdConnectorsEnable_MissingIdentityField(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	cmd := &tbEnableCmd{
+	cmd := &fbBindCmd{
 		Key:      "needs_two_fields",
 		Identity: "field_a=x", // missing field_b
 	}
@@ -147,12 +147,12 @@ func TestCmdConnectorsEnable_MissingIdentityField(t *testing.T) {
 	}
 }
 
-func TestCmdConnectorsEnable_UnknownKey(t *testing.T) {
+func TestCmdFederationsBind_UnknownKey(t *testing.T) {
 	// Stub returns empty catalog.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet && r.URL.Path == "/api/trust-binding-types" {
+		if r.Method == http.MethodGet && r.URL.Path == "/api/trust-federations" {
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode([]client.TrustBindingTypeDef{})
+			_ = json.NewEncoder(w).Encode([]client.TrustFederation{})
 			return
 		}
 		t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
@@ -160,7 +160,7 @@ func TestCmdConnectorsEnable_UnknownKey(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	cmd := &tbEnableCmd{
+	cmd := &fbBindCmd{
 		Key:      "ghost",
 		Identity: "x=y",
 	}
