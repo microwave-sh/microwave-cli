@@ -2,64 +2,60 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
-	"github.com/microwave-sh/microwave-cli/internal/client"
 	"github.com/microwave-sh/microwave-cli/internal/config"
 	"github.com/microwave-sh/microwave-cli/internal/output"
+	"github.com/microwave-sh/microwave-go/auth"
 )
 
 type LoginCmd struct {
-	Key       string `name:"key" help:"Paste a management API key instead of the browser device flow (CI/manual)."`
-	NoBrowser bool   `name:"no-browser" help:"Do not attempt to open a browser automatically."`
+	Key       string `name:"key" help:"Paste a management API key instead of the browser login (CI/manual)."`
+	NoBrowser bool   `name:"no-browser" help:"Do not open a browser; use the device-code flow instead."`
+	Device    bool   `name:"device" help:"Force the device-code flow (headless / SSH)."`
+	ClientID  string `name:"client-id" help:"OAuth client id (the CLI session key spec); overrides config/env."`
 }
 
+// Run authenticates via the shared SDK login core: it discovers the
+// authorization server from the auth-plane metadata document, runs the loopback
+// authorization-code + PKCE flow (falling back to the device grant), and stores
+// the minted session. A pasted --key skips the interactive flow entirely.
 func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 	if key := strings.TrimSpace(c.Key); key != "" {
 		return c.store(key)
 	}
 
-	pub := g.PublicClient()
-	dc, err := pub.RequestDeviceCode(ctx)
+	clientID := c.ClientID
+	if clientID == "" {
+		clientID = config.ResolveAuthClientID()
+	}
+	if clientID == "" {
+		return fmt.Errorf("OAuth client id is required: pass --client-id, set MICROWAVE_AUTH_CLIENT_ID, or add auth_client_id to config")
+	}
+
+	mode := auth.LoginAuto
+	if c.Device || c.NoBrowser {
+		mode = auth.LoginDevice
+	}
+
+	cfg := auth.LoginConfig{
+		MetadataURL: strings.TrimRight(g.authURL(), "/") + "/.well-known/oauth-authorization-server",
+		ClientID:    clientID,
+		Mode:        mode,
+		Output:      os.Stderr,
+	}
+	if c.NoBrowser {
+		cfg.OpenBrowser = func(string) error { return nil } // print the URL, don't open it
+	}
+
+	creds, err := auth.Login(ctx, cfg)
 	if err != nil {
-		return fmt.Errorf("start device login: %w", err)
+		return err
 	}
-
-	fmt.Printf("\n  To authorize this CLI, visit:\n  %s\n\n", output.Bold.Render(dc.VerificationURIComplete))
-	if dc.UserCode != "" {
-		fmt.Printf("  Code: %s\n\n", output.Bold.Render(dc.UserCode))
-	}
-	if !c.NoBrowser {
-		openBrowser(dc.VerificationURIComplete)
-	}
-	fmt.Println("  Waiting for approval...")
-
-	interval := time.Duration(dc.Interval) * time.Second
-	deadline := time.Now().Add(time.Duration(dc.ExpiresIn) * time.Second)
-	for time.Now().Before(deadline) {
-		if interval > 0 {
-			time.Sleep(interval)
-		}
-		poll, err := pub.PollDeviceToken(ctx, dc.DeviceCode)
-		if err != nil {
-			if errors.Is(err, client.ErrAuthorizationPending) {
-				continue
-			}
-			if errors.Is(err, client.ErrDeviceCodeExpired) {
-				return fmt.Errorf("device code expired; run `microwave login` again")
-			}
-			return err
-		}
-		if poll.AccessToken == "" {
-			return fmt.Errorf("device token response missing access_token")
-		}
-		return c.store(poll.AccessToken)
-	}
-	return fmt.Errorf("authorization timed out")
+	return c.store(creds.AccessToken)
 }
 
 func (c *LoginCmd) store(key string) error {
