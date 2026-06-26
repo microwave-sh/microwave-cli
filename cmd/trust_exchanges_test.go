@@ -166,6 +166,41 @@ func TestTECreate_ToInput_SubjectRules(t *testing.T) {
 	}
 }
 
+func TestTECreate_ToInput_VerificationURI(t *testing.T) {
+	c := trustExchangesCreateCmd{
+		Name:             "x",
+		Provider:         "github",
+		Issuer:           "https://example.com",
+		AllowedAudiences: "aud",
+		OutputMode:       "claims",
+		VerificationURI:  "https://app.microwave.sh/verify",
+	}
+	in, err := c.toInput()
+	if err != nil {
+		t.Fatalf("toInput: %v", err)
+	}
+	if in.VerificationURI != "https://app.microwave.sh/verify" {
+		t.Fatalf("VerificationURI = %q, want https://app.microwave.sh/verify", in.VerificationURI)
+	}
+}
+
+func TestTECreate_ToInput_EmptyVerificationURI(t *testing.T) {
+	c := trustExchangesCreateCmd{
+		Name:             "x",
+		Provider:         "github",
+		Issuer:           "https://example.com",
+		AllowedAudiences: "aud",
+		OutputMode:       "claims",
+	}
+	in, err := c.toInput()
+	if err != nil {
+		t.Fatalf("toInput: %v", err)
+	}
+	if in.VerificationURI != "" {
+		t.Fatalf("VerificationURI = %q, want empty", in.VerificationURI)
+	}
+}
+
 func TestTECreate_ToInput_EmptyClaimRulesIsNil(t *testing.T) {
 	c := trustExchangesCreateCmd{
 		Name:             "x",
