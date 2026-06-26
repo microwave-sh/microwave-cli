@@ -32,11 +32,11 @@ func TestLoginDeviceApprovalStoresToken(t *testing.T) {
 			})
 		case "/auth/device":
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"device_code":   "device_abc",
-				"user_code":     "ABCD-EFGH",
-				"authorize_url": "https://example.invalid/activate?code=ABCD-EFGH",
-				"expires_in":    900,
-				"interval":      0,
+				"device_code":      "device_abc",
+				"user_code":        "ABCD-EFGH",
+				"verification_uri": "https://example.invalid/device",
+				"expires_in":       900,
+				"interval":         0,
 			})
 		case "/auth/device/token":
 			polls++
