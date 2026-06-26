@@ -12,11 +12,14 @@ import (
 	"github.com/microwave-sh/microwave-go/auth"
 )
 
+const systemCLIClientID = "microwave-cli"
+
 type LoginCmd struct {
 	Key       string `name:"key" help:"Paste a management API key instead of the browser login (CI/manual)."`
 	NoBrowser bool   `name:"no-browser" help:"Do not open a browser; use the device-code flow instead."`
 	Device    bool   `name:"device" help:"Force the device-code flow (headless / SSH)."`
-	ClientID  string `name:"client-id" help:"OAuth client id (the CLI session key spec); overrides config/env."`
+
+	loginFn func(context.Context, auth.LoginConfig) (*auth.Credentials, error) // test seam; nil → auth.Login
 }
 
 // Run authenticates via the shared SDK login core: it discovers the
@@ -28,14 +31,6 @@ func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 		return c.store(key)
 	}
 
-	clientID := c.ClientID
-	if clientID == "" {
-		clientID = config.ResolveAuthClientID()
-	}
-	if clientID == "" {
-		return fmt.Errorf("OAuth client id is required: pass --client-id, set MICROWAVE_AUTH_CLIENT_ID, or add auth_client_id to config")
-	}
-
 	mode := auth.LoginAuto
 	if c.Device || c.NoBrowser {
 		mode = auth.LoginDevice
@@ -43,7 +38,7 @@ func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 
 	cfg := auth.LoginConfig{
 		MetadataURL: strings.TrimRight(g.authURL(), "/") + "/.well-known/oauth-authorization-server",
-		ClientID:    clientID,
+		ClientID:    systemCLIClientID,
 		Mode:        mode,
 		Output:      os.Stderr,
 	}
@@ -51,7 +46,11 @@ func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 		cfg.OpenBrowser = func(string) error { return nil } // print the URL, don't open it
 	}
 
-	creds, err := auth.Login(ctx, cfg)
+	login := c.loginFn
+	if login == nil {
+		login = auth.Login
+	}
+	creds, err := login(ctx, cfg)
 	if err != nil {
 		return err
 	}

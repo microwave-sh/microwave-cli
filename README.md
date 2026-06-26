@@ -26,11 +26,14 @@ Download a pre-built binary for your platform from
 ## Quickstart
 
 ```sh
-# 1. Authenticate (opens a browser to approve this CLI)
+# 1. Authenticate — opens a browser; zero-config, no client-id needed
 microwave login
 
-# In CI, skip the browser: create a key once with `microwave tokens create`
-# (or in the console) and set it as MICROWAVE_TOKEN.
+# On a headless server or SSH session, use the device-code flow:
+microwave login --device
+
+# In CI, skip the browser: set MICROWAVE_TOKEN (create a key with `microwave tokens create`
+# or `--key` to paste one directly).
 
 # 2. List your key specs
 microwave key-specs list
@@ -48,7 +51,7 @@ microwave whoami
 
 | Command | Description |
 |---|---|
-| `microwave login [--key <key>]` | Log in via browser device flow (or `--key` to paste a management key) |
+| `microwave login [--key <key>] [--device]` | Authenticate via browser (zero-config); `--key` to paste a management key; `--device` for SSH/headless |
 | `microwave logout` | Clear stored credentials |
 | `microwave tokens create\|list\|revoke` | Manage management API keys (for CLI/CI auth) |
 | `microwave whoami` | Print the authenticated identity (`/api/me`) |

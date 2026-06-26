@@ -10,10 +10,9 @@ import (
 
 // GlobalConfig represents ~/.config/microwave/config.toml
 type GlobalConfig struct {
-	Auth         AuthConfig `toml:"auth"`
-	APIURL       string     `toml:"api_url,omitempty"`
-	AuthURL      string     `toml:"auth_url,omitempty"`
-	AuthClientID string     `toml:"auth_client_id,omitempty"`
+	Auth    AuthConfig `toml:"auth"`
+	APIURL  string     `toml:"api_url,omitempty"`
+	AuthURL string     `toml:"auth_url,omitempty"`
 }
 
 // AuthConfig holds the stored management API key.
@@ -114,22 +113,6 @@ func ResolveAuthURL() string {
 		}
 	}
 	return "https://auth.microwave.sh"
-}
-
-// ResolveAuthClientID returns the OAuth client id (the CLI session key spec)
-// using priority: MICROWAVE_AUTH_CLIENT_ID env → config auth_client_id.
-func ResolveAuthClientID() string {
-	if v := os.Getenv("MICROWAVE_AUTH_CLIENT_ID"); v != "" {
-		return v
-	}
-	path := filepath.Join(GlobalConfigDir(), "config.toml")
-	if data, err := os.ReadFile(path); err == nil {
-		var cfg GlobalConfig
-		if toml.Unmarshal(data, &cfg) == nil && cfg.AuthClientID != "" {
-			return cfg.AuthClientID
-		}
-	}
-	return ""
 }
 
 // ClearAuth removes the global config file (ignore not-found errors).
