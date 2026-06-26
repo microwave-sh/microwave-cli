@@ -86,6 +86,7 @@ type trustExchangesCreateCmd struct {
 	SubjectPrefix    string `name:"subject-prefix" help:"Subject prefix rule."`
 	OutputMode       string `name:"output-mode" help:"Output mode (claims, jwt)." required:"" enum:"claims,jwt"`
 	OutputKeySpecID  string `name:"output-key-spec-id" help:"Output key spec ID (required when output-mode=jwt)."`
+	VerificationURI  string `name:"verification-uri" help:"Verification URI surfaced to the caller (e.g. device-flow verification page)."`
 	ClaimRules       string `name:"claim-rules" help:"Claim rules as JSON object (e.g. {\"repo\":{\"equals\":\"x\",\"required\":true}})."`
 	ClaimMapping     string `name:"claim-mapping" help:"Claim mapping as JSON object."`
 	Active           bool   `name:"active" default:"true" help:"Whether the trust exchange is active."`
@@ -108,6 +109,7 @@ func (c *trustExchangesCreateCmd) toInput() (client.TrustExchangeInput, error) {
 		},
 		OutputMode:      c.OutputMode,
 		OutputKeySpecID: c.OutputKeySpecID,
+		VerificationURI: c.VerificationURI,
 		Active:          c.Active,
 	}
 

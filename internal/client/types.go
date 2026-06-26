@@ -327,6 +327,7 @@ type TrustExchangeInput struct {
 	ClaimMapping     TrustExchangeClaimMapping         `json:"claim_mapping"`
 	OutputMode       string                            `json:"output_mode"` // "claims"|"jwt"
 	OutputKeySpecID  string                            `json:"output_key_spec_id,omitempty"`
+	VerificationURI  string                            `json:"verification_uri,omitempty"`
 	Active           bool                              `json:"active"`
 }
 
@@ -348,6 +349,7 @@ type TrustExchange struct {
 	ClaimMapping     TrustExchangeClaimMapping         `json:"claim_mapping"`
 	OutputMode       string                            `json:"output_mode"`
 	OutputKeySpecID  string                            `json:"output_key_spec_id,omitempty"`
+	VerificationURI  string                            `json:"verification_uri,omitempty"`
 	Active           bool                              `json:"active"`
 	CreatedAt        time.Time                         `json:"created_at"`
 	UpdatedAt        time.Time                         `json:"updated_at"`
