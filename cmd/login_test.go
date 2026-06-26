@@ -56,7 +56,7 @@ func TestLoginDeviceFlowStoresToken(t *testing.T) {
 	defer srv.Close()
 	base = srv.URL
 
-	c := &cmd.LoginCmd{NoBrowser: true, ClientID: "spec_cli"}
+	c := &cmd.LoginCmd{NoBrowser: true}
 	g := &cmd.Globals{AuthURL: srv.URL, Version: "test", Output: "table"}
 	if err := c.Run(context.Background(), g); err != nil {
 		t.Fatalf("login: %v", err)
