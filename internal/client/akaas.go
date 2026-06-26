@@ -290,32 +290,6 @@ func (c *Client) MintTrustProviderToken(ctx context.Context, providerID, apiKey 
 
 // ── Device flow / identity / management keys ─────────────────────
 
-func (c *Client) RequestDeviceCode(ctx context.Context) (*DeviceCodeResponse, error) {
-	var out DeviceCodeResponse
-	return &out, c.Do(ctx, "POST", "/auth/device", map[string]any{}, &out)
-}
-
-func (c *Client) PollDeviceToken(ctx context.Context, deviceCode string) (*DeviceTokenResponse, error) {
-	var out DeviceTokenResponse
-	form := url.Values{
-		"grant_type":  {"urn:ietf:params:oauth:grant-type:device_code"},
-		"device_code": {deviceCode},
-	}
-	if err := c.DoForm(ctx, "POST", "/auth/device/token", form, &out); err != nil {
-		var apiErr *APIError
-		if errors.As(err, &apiErr) {
-			switch apiErr.OAuthError {
-			case "authorization_pending":
-				return nil, ErrAuthorizationPending
-			case "expired_token":
-				return nil, ErrDeviceCodeExpired
-			}
-		}
-		return nil, err
-	}
-	return &out, nil
-}
-
 func (c *Client) Me(ctx context.Context) (*Identity, error) {
 	var out Identity
 	return &out, c.Do(ctx, "GET", "/api/me", nil, &out)

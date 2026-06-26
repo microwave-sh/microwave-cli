@@ -12,37 +12,32 @@ import (
 	"github.com/microwave-sh/microwave-go/auth"
 )
 
-const systemCLIClientID = "microwave-cli"
-
 type LoginCmd struct {
 	Key       string `name:"key" help:"Paste a management API key instead of the browser login (CI/manual)."`
-	NoBrowser bool   `name:"no-browser" help:"Do not open a browser; use the device-code flow instead."`
-	Device    bool   `name:"device" help:"Force the device-code flow (headless / SSH)."`
+	NoBrowser bool   `name:"no-browser" help:"Do not open a browser; print the approval URL instead (headless / SSH)."`
+	Device    bool   `name:"device" help:"Do not open a browser; print the approval URL instead (alias of --no-browser)."`
 
 	loginFn func(context.Context, auth.LoginConfig) (*auth.Credentials, error) // test seam; nil → auth.Login
 }
 
-// Run authenticates via the shared SDK login core: it discovers the
-// authorization server from the auth-plane metadata document, runs the loopback
-// authorization-code + PKCE flow (falling back to the device grant), and stores
-// the minted session. A pasted --key skips the interactive flow entirely.
+// Run authenticates via the shared SDK login core. It discovers the auth server
+// from the auth-plane metadata, which advertises cli_login_flow=device_approval,
+// so auth.Login drives the management device-approval flow: it surfaces a console
+// approval URL where the operator approves with their session (carrying their
+// per-operator permissions), then polls for the minted, least-privilege token.
+// No client-id is involved. A pasted --key skips the interactive flow entirely.
 func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 	if key := strings.TrimSpace(c.Key); key != "" {
 		return c.store(key)
 	}
 
-	mode := auth.LoginAuto
-	if c.Device || c.NoBrowser {
-		mode = auth.LoginDevice
-	}
-
 	cfg := auth.LoginConfig{
-		MetadataURL: strings.TrimRight(g.authURL(), "/") + "/.well-known/oauth-authorization-server",
-		ClientID:    systemCLIClientID,
-		Mode:        mode,
-		Output:      os.Stderr,
+		MetadataURL:       strings.TrimRight(g.authURL(), "/") + "/.well-known/oauth-authorization-server",
+		DeviceApprovalURL: strings.TrimRight(g.apiURL(), "/"),
+		Mode:              auth.LoginAuto, // auth plane advertises cli_login_flow=device_approval
+		Output:            os.Stderr,
 	}
-	if c.NoBrowser {
+	if c.Device || c.NoBrowser {
 		cfg.OpenBrowser = func(string) error { return nil } // print the URL, don't open it
 	}
 

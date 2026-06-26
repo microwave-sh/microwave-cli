@@ -39,12 +39,6 @@ func (g *Globals) AuthClient() *client.Client {
 	return client.New(g.authURL(), "", g.Version, g.Debug)
 }
 
-// PublicClient returns an unauthenticated management-API client for the device-flow
-// public endpoints (request code, poll token). It never exits on a missing token.
-func (g *Globals) PublicClient() *client.Client {
-	return client.New(g.apiURL(), "", g.Version, g.Debug)
-}
-
 func (g *Globals) apiURL() string {
 	if g.APIURL != "" {
 		return g.APIURL

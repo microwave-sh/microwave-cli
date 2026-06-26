@@ -7,21 +7,30 @@ import (
 	"github.com/microwave-sh/microwave-go/auth"
 )
 
-func TestLoginUsesSystemCLIClientByDefault(t *testing.T) {
+// TestLoginUsesDeviceApprovalConfig pins that `microwave login` drives the
+// device-approval flow: it passes the management API base as DeviceApprovalURL,
+// no client-id, and lets LoginAuto pick the flow from the server's metadata hint.
+func TestLoginUsesDeviceApprovalConfig(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
 
-	var gotClientID string
+	var got auth.LoginConfig
 	c := &LoginCmd{}
 	c.loginFn = func(ctx context.Context, cfg auth.LoginConfig) (*auth.Credentials, error) {
-		gotClientID = cfg.ClientID
+		got = cfg
 		return &auth.Credentials{AccessToken: "tok"}, nil
 	}
-	g := &Globals{AuthURL: "https://auth.test.invalid", Version: "test"}
+	g := &Globals{AuthURL: "https://auth.test.invalid", APIURL: "https://api.test.invalid", Version: "test"}
 	if err := c.Run(context.Background(), g); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
-	if gotClientID != "microwave-cli" {
-		t.Fatalf("ClientID = %q, want microwave-cli", gotClientID)
+	if got.ClientID != "" {
+		t.Fatalf("ClientID = %q, want empty (device-approval needs none)", got.ClientID)
+	}
+	if got.DeviceApprovalURL != "https://api.test.invalid" {
+		t.Fatalf("DeviceApprovalURL = %q, want the management API base", got.DeviceApprovalURL)
+	}
+	if got.Mode != auth.LoginAuto {
+		t.Fatalf("Mode = %v, want LoginAuto (server-advertised device-approval)", got.Mode)
 	}
 }

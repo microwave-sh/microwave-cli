@@ -473,21 +473,6 @@ type MintTokenResult struct {
 
 // ── Device flow / identity / management keys ─────────────────────
 
-type DeviceCodeResponse struct {
-	DeviceCode              string `json:"device_code"`
-	UserCode                string `json:"user_code"`
-	VerificationURI         string `json:"verification_uri"`
-	VerificationURIComplete string `json:"verification_uri_complete"`
-	ExpiresIn               int    `json:"expires_in"`
-	Interval                int    `json:"interval"`
-}
-
-type DeviceTokenResponse struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	ExpiresIn   int    `json:"expires_in,omitempty"`
-}
-
 type Identity struct {
 	WorkspaceID string   `json:"workspace_id"`
 	Actor       string   `json:"actor"`
