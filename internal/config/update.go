@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -31,7 +33,7 @@ func CheckForUpdate(currentVersion string) {
 		var check UpdateCheck
 		if json.Unmarshal(data, &check) == nil {
 			if time.Since(check.LastCheck) < 24*time.Hour {
-				if check.LatestVersion != "" && check.LatestVersion != currentVersion {
+				if isNewer(check.LatestVersion, currentVersion) {
 					printUpdateNotice(currentVersion, check.LatestVersion)
 				}
 				return
@@ -69,10 +71,53 @@ func CheckForUpdate(currentVersion string) {
 		os.MkdirAll(GlobalConfigDir(), 0700) //nolint:errcheck
 		os.WriteFile(checkFile, data, 0600)  //nolint:errcheck
 
-		if latest != currentVersion {
+		if isNewer(latest, currentVersion) {
 			printUpdateNotice(currentVersion, latest)
 		}
 	}()
+}
+
+// isNewer reports whether latest is a strictly higher semantic version than
+// current. It compares major.minor.patch numerically so a stale cache or a
+// local build that is AHEAD of the published release never prompts a
+// "downgrade". A leading "v" and any -prerelease/+build suffix are ignored, and
+// an unparsable version (e.g. the "dev" default) is treated as not-newer so dev
+// builds never nag.
+func isNewer(latest, current string) bool {
+	lv, ok := parseSemver(latest)
+	if !ok {
+		return false
+	}
+	cv, ok := parseSemver(current)
+	if !ok {
+		return false
+	}
+	for i := range lv {
+		if lv[i] != cv[i] {
+			return lv[i] > cv[i]
+		}
+	}
+	return false
+}
+
+func parseSemver(s string) ([3]int, bool) {
+	s = strings.TrimPrefix(strings.TrimSpace(s), "v")
+	if i := strings.IndexAny(s, "-+"); i >= 0 {
+		s = s[:i]
+	}
+	parts := strings.Split(s, ".")
+	if len(parts) != 3 {
+		return [3]int{}, false
+	}
+	var v [3]int
+	for i, p := range parts {
+		n, err := strconv.Atoi(p)
+		if err != nil || n < 0 {
+			return [3]int{}, false
+		}
+		v[i] = n
+	}
+	return v, true
 }
 
 func printUpdateNotice(current, latest string) {
