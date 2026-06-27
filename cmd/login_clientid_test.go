@@ -8,8 +8,9 @@ import (
 )
 
 // TestLoginUsesDeviceApprovalConfig pins that `microwave login` drives the
-// device-approval flow: it passes the management API base as DeviceApprovalURL,
-// no client-id, and lets LoginAuto pick the flow from the server's metadata hint.
+// device-approval flow: it passes the auth host as DeviceApprovalURL (where the
+// device endpoints live), no client-id, and lets LoginAuto pick the flow from
+// the server's metadata hint.
 func TestLoginUsesDeviceApprovalConfig(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", dir)
@@ -27,8 +28,8 @@ func TestLoginUsesDeviceApprovalConfig(t *testing.T) {
 	if got.ClientID != "" {
 		t.Fatalf("ClientID = %q, want empty (device-approval needs none)", got.ClientID)
 	}
-	if got.DeviceApprovalURL != "https://api.test.invalid" {
-		t.Fatalf("DeviceApprovalURL = %q, want the management API base", got.DeviceApprovalURL)
+	if got.DeviceApprovalURL != "https://auth.test.invalid" {
+		t.Fatalf("DeviceApprovalURL = %q, want the auth host", got.DeviceApprovalURL)
 	}
 	if got.Mode != auth.LoginAuto {
 		t.Fatalf("Mode = %v, want LoginAuto (server-advertised device-approval)", got.Mode)

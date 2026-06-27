@@ -41,10 +41,11 @@ func TestLoginDeviceApprovalStoresToken(t *testing.T) {
 		case "/auth/device/token":
 			polls++
 			if polls < 2 {
-				_ = json.NewEncoder(w).Encode(map[string]any{"status": "pending"})
+				w.WriteHeader(http.StatusBadRequest)
+				_ = json.NewEncoder(w).Encode(map[string]any{"error": "authorization_pending"})
 				return
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"status": "approved", "token": "jwt-xyz", "expires_in": 86400})
+			_ = json.NewEncoder(w).Encode(map[string]any{"access_token": "jwt-xyz", "token_type": "Bearer", "expires_in": 86400})
 		default:
 			http.NotFound(w, r)
 		}
