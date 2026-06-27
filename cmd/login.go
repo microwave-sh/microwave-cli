@@ -41,8 +41,10 @@ func (c *LoginCmd) Run(ctx context.Context, g *Globals) error {
 	pr := &loginProgress{cancel: cancel}
 
 	cfg := auth.LoginConfig{
-		MetadataURL:       strings.TrimRight(g.authURL(), "/") + "/.well-known/oauth-authorization-server",
-		DeviceApprovalURL: strings.TrimRight(g.apiURL(), "/"),
+		MetadataURL: strings.TrimRight(g.authURL(), "/") + "/.well-known/oauth-authorization-server",
+		// The device-approval endpoints (request + RFC 8628 poll) live on the
+		// auth plane, alongside the metadata they're discovered from.
+		DeviceApprovalURL: strings.TrimRight(g.authURL(), "/"),
 		Mode:              auth.LoginAuto, // auth plane advertises cli_login_flow=device_approval
 		Output:            os.Stderr,
 		Progress:          pr,
