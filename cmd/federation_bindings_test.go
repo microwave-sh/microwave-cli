@@ -61,9 +61,9 @@ func TestCmdFederationsBind_PositionalKey(t *testing.T) {
 	var gotBindingBody client.TrustFederationBindingInput
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.Method == http.MethodGet && r.URL.Path == "/api/trust-federations":
+		case r.Method == http.MethodPost && r.URL.Path == "/api/trust-federations/search":
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(fedList)
+			_ = json.NewEncoder(w).Encode(client.SearchResponse[client.TrustFederation]{Data: fedList})
 
 		case r.Method == http.MethodPost && r.URL.Path == "/api/trust-federation-bindings":
 			if err := json.NewDecoder(r.Body).Decode(&gotBindingBody); err != nil {
@@ -121,13 +121,13 @@ func TestCmdFederationsBind_MissingIdentityField(t *testing.T) {
 	}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet && r.URL.Path == "/api/trust-federations" {
+		if r.Method == http.MethodPost && r.URL.Path == "/api/trust-federations/search" {
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(fedList)
+			_ = json.NewEncoder(w).Encode(client.SearchResponse[client.TrustFederation]{Data: fedList})
 			return
 		}
-		// POST should NOT be reached.
-		t.Errorf("unexpected request %s %s — POST should not have been sent", r.Method, r.URL.Path)
+		// The binding creation should NOT be reached — identity validation fails first.
+		t.Errorf("unexpected request %s %s — binding should not have been created", r.Method, r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer srv.Close()
@@ -150,9 +150,9 @@ func TestCmdFederationsBind_MissingIdentityField(t *testing.T) {
 func TestCmdFederationsBind_UnknownKey(t *testing.T) {
 	// Stub returns empty catalog.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet && r.URL.Path == "/api/trust-federations" {
+		if r.Method == http.MethodPost && r.URL.Path == "/api/trust-federations/search" {
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode([]client.TrustFederation{})
+			_ = json.NewEncoder(w).Encode(client.SearchResponse[client.TrustFederation]{Data: []client.TrustFederation{}})
 			return
 		}
 		t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)

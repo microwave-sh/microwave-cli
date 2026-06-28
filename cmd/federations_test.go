@@ -74,13 +74,13 @@ func TestCmdFederations_List_IncludesSystemAndOwn(t *testing.T) {
 	}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet || r.URL.Path != "/api/trust-federations" {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/trust-federations/search" {
 			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(rows)
+		_ = json.NewEncoder(w).Encode(client.SearchResponse[client.TrustFederation]{Data: rows})
 	}))
 	defer srv.Close()
 
