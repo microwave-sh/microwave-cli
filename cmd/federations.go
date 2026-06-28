@@ -53,18 +53,20 @@ func (c *fedCreateCmd) Run(ctx context.Context, g *Globals) error {
 
 // ── list ────────────────────────────────────────────────────────────────────
 
-type fedListCmd struct{}
+type fedListCmd struct {
+	listFlags
+}
 
 func (c *fedListCmd) Run(ctx context.Context, g *Globals) error {
-	defs, err := g.Client().ListTrustFederations(ctx)
+	page, err := g.Client().SearchTrustFederations(ctx, c.searchRequest(nil))
 	if err != nil {
 		return err
 	}
 	if g.IsJSON() {
-		return output.PrintJSON(defs)
+		return output.PrintJSON(page)
 	}
-	rows := make([][]string, len(defs))
-	for i, d := range defs {
+	rows := make([][]string, len(page.Data))
+	for i, d := range page.Data {
 		rows[i] = []string{d.ID, d.Key, d.WorkspaceID, d.Label}
 	}
 	output.PrintTable([]string{"ID", "KEY", "WORKSPACE_ID", "LABEL"}, rows, false)

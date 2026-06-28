@@ -242,9 +242,30 @@ func (c *Client) CreateTrustFederation(ctx context.Context, in TrustFederationIn
 	return &out, c.Do(ctx, "POST", "/api/trust-federations", in, &out)
 }
 
+// SearchTrustFederations returns one page of trust federations. Like the other
+// collection endpoints, it POSTs to the /search route and returns the
+// {data, has_more, ...} envelope.
+func (c *Client) SearchTrustFederations(ctx context.Context, req SearchRequest) (*SearchResponse[TrustFederation], error) {
+	return Search[TrustFederation](ctx, c, "/api/trust-federations", req)
+}
+
+// ListTrustFederations returns every trust federation in the workspace, paging
+// through the search endpoint. Callers that only render a single page should use
+// SearchTrustFederations directly.
 func (c *Client) ListTrustFederations(ctx context.Context) ([]TrustFederation, error) {
-	var out []TrustFederation
-	return out, c.Do(ctx, "GET", "/api/trust-federations", nil, &out)
+	var all []TrustFederation
+	var req SearchRequest
+	for {
+		page, err := c.SearchTrustFederations(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, page.Data...)
+		if !page.HasMore || page.NextCursor == "" {
+			return all, nil
+		}
+		req.Cursor = page.NextCursor
+	}
 }
 
 func (c *Client) GetTrustFederation(ctx context.Context, id string) (*TrustFederation, error) {
